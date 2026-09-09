@@ -32,7 +32,8 @@ Este repositório será atualizado continuamente ao longo do desenvolvimento e p
 
 - [Joao Pedro Marchetti] — Desenvolvimento
 - [Matheus Paiva] — Desenvolvimento
-- Orientador(a): a definir
+- Orientador(a):  Alessandro Aparecido da Silva Horas
+  
 
 ## Estrutura do repositório
 
