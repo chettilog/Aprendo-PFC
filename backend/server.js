@@ -24,6 +24,45 @@ app.get('/', (req, res) => {
   res.json({ message: 'API do Aprendo está funcionando!' });
 });
 
+const pool = require('./db');
+
+// Rota de teste: verifica se a conexão com o banco está funcionando
+app.get('/test-db', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.json({ message: 'Conexão com o banco funcionando!', horario: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao conectar com o banco', detalhes: err.message });
+  }
+});
+const bcrypt = require('bcrypt');
+
+// Rota de cadastro de usuário
+app.post('/cadastro', async (req, res) => {
+  try {
+    const { nome, email, senha } = req.body;
+
+    if (!nome || !email || !senha) {
+      return res.status(400).json({ error: 'Nome, e-mail e senha são obrigatórios' });
+    }
+
+    // Criptografa a senha antes de salvar (nunca salvamos senha em texto puro)
+    const senhaCriptografada = await bcrypt.hash(senha, 10);
+
+    const result = await pool.query(
+      'INSERT INTO usuarios (nome, email, senha) VALUES ($1, $2, $3) RETURNING id, nome, email',
+      [nome, email, senhaCriptografada]
+    );
+
+    res.status(201).json({ message: 'Usuário cadastrado com sucesso!', usuario: result.rows[0] });
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Este e-mail já está cadastrado' });
+    }
+    res.status(500).json({ error: 'Erro ao cadastrar usuário', detalhes: err.message });
+  }
+});
+
 // Inicia o servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
