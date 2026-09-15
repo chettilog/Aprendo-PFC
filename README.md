@@ -1,6 +1,6 @@
 # Aprendo
 
-Plataforma gamificada de aprendizagem voltada para estudantes do ensino médio, desenvolvida como Projeto Final de Curso (PFC).
+Plataforma gamificada de aprendizagem voltada para estudantes do ensino médio.
 
 ## Sobre o projeto
 
