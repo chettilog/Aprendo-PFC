@@ -1,44 +1,96 @@
- # Aprendo
+# Aprendo
 
-Plataforma gamificada de aprendizagem voltada para estudantes do ensino médio.
+Plataforma gamificada de aprendizagem voltada para estudantes do ensino médio, desenvolvida como Projeto Final de Curso (PFC).
 
 ## Sobre o projeto
 
-**Título acadêmico:** Gamificação como estratégia de engajamento na aprendizagem do ensino médio
+O Aprendo utiliza mecânicas de gamificação para engajar estudantes do ensino médio no processo de aprendizagem, com foco em **verificação por produção** — o estudante precisa produzir conteúdo (resumos, explicações) para comprovar seu aprendizado, ao invés de apenas responder quizzes de múltipla escolha.
 
-O Aprendo é uma plataforma que utiliza mecânicas de gamificação para engajar estudantes do ensino médio no processo de aprendizagem. Diferente de abordagens tradicionais baseadas em quizzes de múltipla escolha (facilmente burláveis com uma simples busca no Google), o sistema utiliza **verificação por produção**: o estudante precisa produzir conteúdo (resumos escritos ou explicações em áudio) para comprovar que aprendeu o assunto.
+## Tecnologias
 
-O sistema também incorpora:
-- Repetição espaçada (spaced repetition) para reforço de conteúdo
-- Penalidades retroativas de XP em caso de esquecimento
-- Progressão gamificada (XP, níveis, conquistas)
+- **Frontend:** Flutter Web
+- **Backend:** Node.js + Express
+- **Banco de dados:** PostgreSQL
 
-## Status
+## Funcionalidades implementadas
 
-🚧 Em desenvolvimento — início da fase de backend.
+- Cadastro de usuário (interface + API + persistência no banco, com senha criptografada via bcrypt)
 
-Este repositório será atualizado continuamente ao longo do desenvolvimento e pode ser acompanhado pelo professor orientador diretamente pelo histórico de commits.
+## Como rodar o projeto
 
-## Stack tecnológica
+### Pré-requisitos
 
-| Camada | Tecnologia |
-|---|---|
-| Frontend (web + mobile) | Flutter / Dart |
-| Backend / API | Node.js + Express |
-| Banco de dados | PostgreSQL |
-| Autenticação | JWT |
+- Git
+- Node.js (LTS)
+- PostgreSQL 15+
+- Flutter SDK
+- Google Chrome
 
-## Equipe
+### 1. Clonar o repositório
 
-- [Joao Pedro Marchetti] — Desenvolvimento
-- [Matheus Paiva] — Desenvolvimento
-- Orientador(a):  Alessandro Aparecido da Silva Horas
-  
+```bash
+git clone https://github.com/chettilog/Aprendo-PFC.git
+cd Aprendo-PFC
+```
 
-## Estrutura do repositório
+### 2. Configurar o banco
 
-> Em construção — a estrutura de pastas será documentada conforme o backend e o frontend forem implementados.
+Acesse o PostgreSQL:
 
----
+```bash
+psql -U postgres
+```
 
-*Repositório acadêmico desenvolvido como parte do Trabalho de Conclusão de Curso.*
+Crie o banco e a tabela:
+
+```sql
+CREATE DATABASE aprendo_db;
+\c aprendo_db
+CREATE TABLE usuarios (
+  id SERIAL PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL,
+  email VARCHAR(100) UNIQUE NOT NULL,
+  senha VARCHAR(255) NOT NULL,
+  criado_em TIMESTAMP DEFAULT NOW()
+);
+```
+
+Saia com `\q`.
+
+### 3. Rodar o backend
+
+```bash
+cd backend
+npm install
+```
+
+Crie um arquivo `.env` na pasta `backend`:
+
+```
+PORT=3000
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=postgres123
+DB_NAME=aprendo_db
+```
+
+Inicie o servidor:
+
+```bash
+node server.js
+```
+
+Backend rodando em `http://localhost:3000`.
+
+### 4. Rodar o frontend
+
+Em outro terminal:
+
+```bash
+cd frontend
+flutter pub get
+flutter run -d chrome
+```
+
+O Chrome abre automaticamente com a tela de cadastro.
