@@ -1,0 +1,20 @@
+### Teste de conexão com o banco
+GET http://localhost:3000/test-db
+
+### Cadastro de usuário
+POST http://localhost:3000/cadastro
+Content-Type: application/json
+
+{
+  "nome": "Teste",
+  "email": "teste@teste.com",
+  "senha": "123456"
+}
+### Login de usuário
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "teste@teste.com",
+  "senha": "123456"
+}

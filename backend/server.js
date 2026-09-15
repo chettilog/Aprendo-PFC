@@ -63,6 +63,48 @@ app.post('/cadastro', async (req, res) => {
   }
 });
 
+// Rota de login
+app.post('/login', async (req, res) => {
+  try {
+    const { email, senha } = req.body;
+
+    if (!email || !senha) {
+      return res.status(400).json({ error: 'E-mail e senha são obrigatórios' });
+    }
+
+    // Busca o usuário pelo email
+    const result = await pool.query(
+      'SELECT id, nome, email, senha FROM usuarios WHERE email = $1',
+      [email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'E-mail ou senha inválidos' });
+    }
+
+    const usuario = result.rows[0];
+
+    // Compara a senha enviada com o hash salvo no banco
+    const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
+
+    if (!senhaCorreta) {
+      return res.status(401).json({ error: 'E-mail ou senha inválidos' });
+    }
+
+    // Login bem-sucedido (sem enviar a senha de volta)
+    res.json({
+      message: 'Login realizado com sucesso!',
+      usuario: {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao realizar login', detalhes: err.message });
+  }
+});
+
 // Inicia o servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);

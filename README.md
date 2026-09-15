@@ -14,7 +14,10 @@ O Aprendo utiliza mecânicas de gamificação para engajar estudantes do ensino 
 
 ## Funcionalidades implementadas
 
-- Cadastro de usuário (interface + API + persistência no banco, com senha criptografada via bcrypt)
+-## Funcionalidades implementadas
+
+- **Cadastro de usuário** — interface + API + persistência no banco, com senha criptografada via bcrypt
+- **Login de usuário** — validação de email/senha com comparação segura via bcrypt, com navegação entre as telas de login e cadastro
 
 ## Como rodar o projeto
 
