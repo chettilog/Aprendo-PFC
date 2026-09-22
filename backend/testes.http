@@ -18,3 +18,13 @@ Content-Type: application/json
   "email": "teste@teste.com",
   "senha": "123456"
 }
+### Perfil - sem token 
+GET http://localhost:3000/perfil
+
+### Perfil - com token válido 
+GET http://localhost:3000/perfil
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ0ZXN0ZUB0ZXN0ZS5jb20iLCJpYXQiOjE3OTAwODkyNzQsImV4cCI6MTc5MDA5NjQ3NH0.nR1Ci6Pl3_9wzJKZN9ckcaC7IMAxKq8l__B6d6ukaE4
+
+### Perfil - com token inválido 
+GET http://localhost:3000/perfil
+Authorization: Bearer token_falso_qualquer

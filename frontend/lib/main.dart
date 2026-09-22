@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const AprendoApp());
@@ -57,9 +58,18 @@ class _TelaLoginState extends State<TelaLogin> {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        setState(() {
-          _mensagem = 'Bem-vindo, ${data['usuario']['nome']}!';
-        });
+        // Salva o token no armazenamento local do navegador
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', data['token']);
+        await prefs.setString('nome_usuario', data['usuario']['nome']);
+
+        // Navega pra tela de perfil
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const TelaPerfil()),
+          );
+        }
       } else {
         setState(() {
           _mensagem = 'Erro: ${data['error'] ?? 'Falha no login'}';
@@ -191,7 +201,7 @@ class _TelaCadastroState extends State<TelaCadastro> {
 
       if (response.statusCode == 201) {
         setState(() {
-          _mensagem = 'Cadastro realizado com sucesso! Bem-vindo, ${data['usuario']['nome']}';
+          _mensagem = 'Cadastro realizado com sucesso! Faça login para continuar.';
         });
         _nomeController.clear();
         _emailController.clear();
@@ -287,6 +297,142 @@ class _TelaCadastroState extends State<TelaCadastro> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// TELA DE PERFIL (área logada, protegida por JWT)
+// ============================================================
+class TelaPerfil extends StatefulWidget {
+  const TelaPerfil({super.key});
+
+  @override
+  State<TelaPerfil> createState() => _TelaPerfilState();
+}
+
+class _TelaPerfilState extends State<TelaPerfil> {
+  Map<String, dynamic>? _dadosUsuario;
+  bool _carregando = true;
+  String _erro = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarPerfil();
+  }
+
+  Future<void> _carregarPerfil() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        setState(() {
+          _erro = 'Você precisa fazer login';
+          _carregando = false;
+        });
+        return;
+      }
+
+      // Chama a rota protegida enviando o token no cabeçalho
+      final response = await http.get(
+        Uri.parse('http://localhost:3000/perfil'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _dadosUsuario = data['usuario'];
+          _carregando = false;
+        });
+      } else {
+        setState(() {
+          _erro = data['error'] ?? 'Erro ao carregar perfil';
+          _carregando = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _erro = 'Erro de conexão: $e';
+        _carregando = false;
+      });
+    }
+  }
+
+  Future<void> _fazerLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token');
+    await prefs.remove('nome_usuario');
+
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const TelaLogin()),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Aprendo - Meu Perfil'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Sair',
+            onPressed: _fazerLogout,
+          ),
+        ],
+      ),
+      body: Center(
+        child: _carregando
+            ? const CircularProgressIndicator()
+            : _erro.isNotEmpty
+                ? Text('Erro: $_erro', style: const TextStyle(color: Colors.red))
+                : Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.account_circle, size: 100, color: Colors.deepPurple),
+                          const SizedBox(height: 24),
+                          Text(
+                            'Bem-vindo, ${_dadosUsuario!['nome']}!',
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 32),
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('ID: ${_dadosUsuario!['id']}'),
+                                  const SizedBox(height: 8),
+                                  Text('Nome: ${_dadosUsuario!['nome']}'),
+                                  const SizedBox(height: 8),
+                                  Text('E-mail: ${_dadosUsuario!['email']}'),
+                                  const SizedBox(height: 8),
+                                  Text('Cadastrado em: ${_dadosUsuario!['criado_em']}'),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
       ),
     );
   }
