@@ -28,3 +28,28 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiO
 ### Perfil - com token inválido 
 GET http://localhost:3000/perfil
 Authorization: Bearer token_falso_qualquer
+
+### Ver logs (protegida - precisa de token)
+GET http://localhost:3000/logs
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ0ZXN0ZUB0ZXN0ZS5jb20iLCJpYXQiOjE3OTAzNTUxMjksImV4cCI6MTc5MDM2MjMyOX0.0Umc-FZfXTeYhm5fuf6l07lJDcBaRQFeWglei1YiYeg
+
+### Cadastro SEM aceitar termos 
+POST http://localhost:3000/cadastro
+Content-Type: application/json
+
+{
+  "nome": "Teste Sem Termos",
+  "email": "semtermos@teste.com",
+  "senha": "123456"
+}
+
+### Cadastro COM aceite dos termos (deve funcionar)
+POST http://localhost:3000/cadastro
+Content-Type: application/json
+
+{
+  "nome": "Teste Com Termos",
+  "email": "comtermos@teste.com",
+  "senha": "123456",
+  "aceitouTermos": true
+}

@@ -178,6 +178,7 @@ class _TelaCadastroState extends State<TelaCadastro> {
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
   bool _carregando = false;
+  bool _aceitouTermos = false;
   String _mensagem = '';
 
   Future<void> _cadastrar() async {
@@ -194,6 +195,7 @@ class _TelaCadastroState extends State<TelaCadastro> {
           'nome': _nomeController.text,
           'email': _emailController.text,
           'senha': _senhaController.text,
+          'aceitouTermos': _aceitouTermos,
         }),
       );
 
@@ -267,10 +269,66 @@ class _TelaCadastroState extends State<TelaCadastro> {
                   ),
                 ),
                 const SizedBox(height: 24),
+                                // Checkbox de aceite dos Termos e Política (obrigatório - LGPD)
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _aceitouTermos,
+                      onChanged: (valor) {
+                        setState(() {
+                          _aceitouTermos = valor ?? false;
+                        });
+                      },
+                    ),
+                     Expanded(
+                      child: Wrap(
+                        children: [
+                          const Text('Li e aceito os ', style: TextStyle(fontSize: 13)),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const TelaTermos()),
+                              );
+                            },
+                            child: const Text(
+                              'Termos de Uso',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.deepPurple,
+                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          const Text(' e a ', style: TextStyle(fontSize: 13)),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const TelaPolitica()),
+                              );
+                            },
+                            child: const Text(
+                              'Política de Privacidade',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.deepPurple,
+                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: _carregando ? null : _cadastrar,
+                                        onPressed: (_carregando || !_aceitouTermos) ? null : _cadastrar,
                     child: _carregando
                         ? const CircularProgressIndicator()
                         : const Text('Cadastrar'),
@@ -434,6 +492,148 @@ class _TelaPerfilState extends State<TelaPerfil> {
                     ),
                   ),
       ),
+    );
+  }
+}
+// ============================================================
+// TELA DE TERMOS DE USO
+// ============================================================
+class TelaTermos extends StatefulWidget {
+  const TelaTermos({super.key});
+
+  @override
+  State<TelaTermos> createState() => _TelaTermosState();
+}
+
+class _TelaTermosState extends State<TelaTermos> {
+  String _conteudo = '';
+  String _versao = '';
+  bool _carregando = true;
+  String _erro = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarTermos();
+  }
+
+  Future<void> _carregarTermos() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:3000/termos'),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _conteudo = data['conteudo'];
+          _versao = data['versao'];
+          _carregando = false;
+        });
+      } else {
+        setState(() {
+          _erro = data['error'] ?? 'Erro ao carregar termos';
+          _carregando = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _erro = 'Erro de conexão: $e';
+        _carregando = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Termos de Uso ${_versao.isNotEmpty ? "(v$_versao)" : ""}'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      ),
+      body: _carregando
+          ? const Center(child: CircularProgressIndicator())
+          : _erro.isNotEmpty
+              ? Center(child: Text('Erro: $_erro', style: const TextStyle(color: Colors.red)))
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    _conteudo,
+                    style: const TextStyle(fontSize: 14, height: 1.5),
+                  ),
+                ),
+    );
+  }
+}
+// ============================================================
+// TELA DE POLÍTICA DE PRIVACIDADE
+// ============================================================
+class TelaPolitica extends StatefulWidget {
+  const TelaPolitica({super.key});
+
+  @override
+  State<TelaPolitica> createState() => _TelaPoliticaState();
+}
+
+class _TelaPoliticaState extends State<TelaPolitica> {
+  String _conteudo = '';
+  String _versao = '';
+  bool _carregando = true;
+  String _erro = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarPolitica();
+  }
+
+  Future<void> _carregarPolitica() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:3000/politica'),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _conteudo = data['conteudo'];
+          _versao = data['versao'];
+          _carregando = false;
+        });
+      } else {
+        setState(() {
+          _erro = data['error'] ?? 'Erro ao carregar política';
+          _carregando = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _erro = 'Erro de conexão: $e';
+        _carregando = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Política de Privacidade ${_versao.isNotEmpty ? "(v$_versao)" : ""}'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      ),
+      body: _carregando
+          ? const Center(child: CircularProgressIndicator())
+          : _erro.isNotEmpty
+              ? Center(child: Text('Erro: $_erro', style: const TextStyle(color: Colors.red)))
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    _conteudo,
+                    style: const TextStyle(fontSize: 14, height: 1.5),
+                  ),
+                ),
     );
   }
 }

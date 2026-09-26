@@ -5,6 +5,8 @@ const cors = require('cors');
 // Carrega variáveis de ambiente do arquivo .env
 require('dotenv').config();
 
+const fs = require('fs');
+const path = require('path');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('./db');
@@ -69,32 +71,46 @@ app.get('/test-db', async (req, res) => {
 // Rota de cadastro de usuário
 app.post('/cadastro', async (req, res) => {
   try {
-    const { nome, email, senha } = req.body;
+    const { nome, email, senha, aceitouTermos } = req.body;
 
     if (!nome || !email || !senha) {
       return res.status(400).json({ error: 'Nome, e-mail e senha são obrigatórios' });
     }
 
+    // Validação LGPD: exige aceite explícito dos termos antes de criar conta
+    if (!aceitouTermos) {
+      return res.status(400).json({ 
+        error: 'É necessário aceitar os Termos de Uso e a Política de Privacidade' 
+      });
+    }
+
     const senhaCriptografada = await bcrypt.hash(senha, 10);
 
+    // Versão atual dos documentos aceitos (atualizar quando os termos mudarem)
+    const versaoTermos = '1.0';
+
     const result = await pool.query(
-      'INSERT INTO usuarios (nome, email, senha) VALUES ($1, $2, $3) RETURNING id, nome, email',
-      [nome, email, senhaCriptografada]
+      `INSERT INTO usuarios (nome, email, senha, termos_aceitos_em, termos_versao) 
+       VALUES ($1, $2, $3, NOW(), $4) 
+       RETURNING id, nome, email, termos_aceitos_em, termos_versao`,
+      [nome, email, senhaCriptografada, versaoTermos]
     );
 
-        // Registra log de cadastro bem-sucedido
+    // Registra log de cadastro bem-sucedido
     await registrarLog(
       result.rows[0].id,
       'cadastro',
-      `Novo usuário: ${email}`,
+      `Novo usuário: ${email} (termos v${versaoTermos})`,
       req.ip,
       true
     );
 
-    res.status(201).json({ message: 'Usuário cadastrado com sucesso!', usuario: result.rows[0] });
+    res.status(201).json({ 
+      message: 'Usuário cadastrado com sucesso!', 
+      usuario: result.rows[0] 
+    });
   } catch (err) {
-        if (err.code === '23505') {
-      // Registra log de tentativa de cadastro com email já existente
+    if (err.code === '23505') {
       await registrarLog(
         null,
         'cadastro_falha',
@@ -107,6 +123,7 @@ app.post('/cadastro', async (req, res) => {
     res.status(500).json({ error: 'Erro ao cadastrar usuário', detalhes: err.message });
   }
 });
+        // Registra log de cadastro bem-sucedido
 
 // Rota de login
 app.post('/login', async (req, res) => {
@@ -225,6 +242,28 @@ app.get('/logs', verificarToken, async (req, res) => {
     res.json({ logs: result.rows });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar logs', detalhes: err.message });
+  }
+});
+
+// Rota pública: retorna o texto dos Termos de Uso
+app.get('/termos', (req, res) => {
+  try {
+    const caminho = path.join(__dirname, 'documentos', 'termos-de-uso-v1.md');
+    const conteudo = fs.readFileSync(caminho, 'utf-8');
+    res.json({ versao: '1.0', conteudo: conteudo });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao carregar Termos de Uso', detalhes: err.message });
+  }
+});
+
+// Rota pública: retorna o texto da Política de Privacidade
+app.get('/politica', (req, res) => {
+  try {
+    const caminho = path.join(__dirname, 'documentos', 'politica-de-privacidade-v1.md');
+    const conteudo = fs.readFileSync(caminho, 'utf-8');
+    res.json({ versao: '1.0', conteudo: conteudo });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao carregar Política de Privacidade', detalhes: err.message });
   }
 });
 
