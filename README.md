@@ -21,11 +21,12 @@ O Aprendo utiliza mecânicas de gamificação para engajar estudantes, com foco 
 - Rotas protegidas por middleware de validação do token
 - Tela de perfil acessível apenas a usuários autenticados
 - Logout com remoção do token
+- Perfis de usuário (`aluno` e `admin`), com permissões verificadas no backend a cada requisição
 
 **Auditoria**
 - Registro de ações na tabela `logs`: cadastro, login (sucesso e falha), acesso ao perfil, exclusão de conta e consultas externas
 - Cada registro guarda ação, usuário, IP, data/hora e resultado — sem armazenar senhas ou tokens
-- Consulta dos logs pela rota protegida `GET /logs`
+- - Consulta dos logs pela rota `GET /logs`, restrita ao perfil admin; tentativas de acesso negado também são registradas
 
 **LGPD**
 - Aceite obrigatório dos Termos de Uso e da Política de Privacidade no cadastro, com registro da versão e da data do aceite
@@ -60,7 +61,7 @@ aprendo/
 | GET | `/termos` | Público | Termos de Uso |
 | GET | `/politica` | Público | Política de Privacidade |
 | GET | `/perfil` | JWT | Dados do usuário logado |
-| GET | `/logs` | JWT | Logs de auditoria |
+| GET | `/logs` | JWT + admin | Logs de auditoria |
 | GET | `/wiki/:topico` | JWT | Consulta à Wikipedia |
 | DELETE | `/minha-conta` | JWT | Exclui a conta do titular |
 
@@ -103,7 +104,8 @@ CREATE TABLE usuarios (
   senha VARCHAR(255) NOT NULL,
   criado_em TIMESTAMP DEFAULT NOW(),
   termos_aceitos_em TIMESTAMP,
-  termos_versao VARCHAR(10)
+  termos_versao VARCHAR(10),
+  perfil VARCHAR(20) NOT NULL DEFAULT 'aluno'
 );
 
 CREATE TABLE logs (
@@ -157,3 +159,10 @@ flutter run -d chrome
 ```
 
 O Chrome abre automaticamente na tela de login.
+
+### 5. Criar um usuário administrador
+
+Por segurança, nenhum usuário consegue se tornar administrador pela interface. Cadastre uma conta normalmente pelo app e promova-a direto no banco:
+
+    psql -U postgres -d aprendo_db
+    UPDATE usuarios SET perfil = 'admin' WHERE email = 'email_da_conta@exemplo.com';

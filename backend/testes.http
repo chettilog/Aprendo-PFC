@@ -75,3 +75,29 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiO
 ### Wiki - tópico que não existe (deve dar 404)
 GET http://localhost:3000/wiki/asdfghjklzxcvbnm
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ0ZXN0ZUB0ZXN0ZS5jb20iLCJpYXQiOjE3OTA1MTgzMzUsImV4cCI6MTc5MDUyNTUzNX0.0KsW_siOk2fDau-xaMXpofwuhv19tkRKm9yhjd1Engk
+
+### Login ALUNO
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "comtermos@teste.com",
+  "senha": "123456"
+}
+
+### Login ADMIN
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "admin@aprendo.com",
+  "senha": "123456"
+}
+
+### Logs como ALUNO 403
+GET http://localhost:3000/logs
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZW1haWwiOiJjb210ZXJtb3NAdGVzdGUuY29tIiwiaWF0IjoxNzkwNTQ4ODAzLCJleHAiOjE3OTA1NTYwMDN9.NQ3mLgvyy6LXdbzuZZK08PKeDlVYKpy4RS4Dq_HeFdM
+
+### Logs como ADMIN 200
+GET http://localhost:3000/logs
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTgsImVtYWlsIjoiYWRtaW5AYXByZW5kby5jb20iLCJpYXQiOjE3OTA1NDg4MzMsImV4cCI6MTc5MDU1NjAzM30.iJZtOPXb-umiYzsmQiGmfCAyIgQ8UPNJhbYXfvWYdMo

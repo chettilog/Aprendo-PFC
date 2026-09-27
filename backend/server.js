@@ -53,6 +53,42 @@ async function registrarLog(usuarioId, acao, detalhes, ip, sucesso = true) {
   }
 }
 
+// Middleware: permite acesso apenas a usuários com um dos perfis informados
+// O perfil é consultado no banco a cada requisição (não confia só no token)
+function exigirPerfil(...perfisPermitidos) {
+  return async (req, res, next) => {
+    try {
+      const result = await pool.query(
+        'SELECT perfil FROM usuarios WHERE id = $1',
+        [req.usuario.id]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(401).json({ error: 'Usuário não encontrado' });
+      }
+
+      const perfil = result.rows[0].perfil;
+
+      if (!perfisPermitidos.includes(perfil)) {
+        // Registra a tentativa de acesso negado (auditoria)
+        await registrarLog(
+          req.usuario.id,
+          'acesso_negado',
+          `Tentativa de acesso a ${req.originalUrl} com perfil ${perfil}`,
+          req.ip,
+          false
+        );
+        return res.status(403).json({ error: 'Acesso negado: permissão insuficiente' });
+      }
+
+      req.usuario.perfil = perfil;
+      next();
+    } catch (err) {
+      res.status(500).json({ error: 'Erro ao verificar permissões', detalhes: err.message });
+    }
+  };
+}
+
 // Rota de teste simples
 app.get('/', (req, res) => {
   res.json({ message: 'API do Aprendo está funcionando!' });
@@ -204,7 +240,7 @@ app.post('/login', async (req, res) => {
 app.get('/perfil', verificarToken, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, nome, email, criado_em FROM usuarios WHERE id = $1',
+            'SELECT id, nome, email, perfil, criado_em FROM usuarios WHERE id = $1',
       [req.usuario.id]
     );
 
@@ -263,7 +299,7 @@ app.delete('/minha-conta', verificarToken, async (req, res) => {
 });
 
 // Rota protegida: retorna os logs de auditoria
-app.get('/logs', verificarToken, async (req, res) => {
+app.get('/logs', verificarToken, exigirPerfil('admin'), async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT l.id, l.usuario_id, u.nome as usuario_nome, l.acao, l.detalhes, 
@@ -301,8 +337,8 @@ app.get('/politica', (req, res) => {
     res.status(500).json({ error: 'Erro ao carregar Política de Privacidade', detalhes: err.message });
   }
 });
-// Rota protegida: consulta a API da Wikipedia (proxy - protege o IP do aluno)
-// A chamada é feita pelo servidor, então a Wikipedia recebe apenas o IP do backend
+// Rota protegidaverificarToken: consulta a API da Wikipedia (proxy - protege o IP do aluno)
+// A chamada é feita pelo servidor, Wikipedia recebe apenas o IP do backend
 app.get('/wiki/:topico', verificarToken, async (req, res) => {
   try {
     const topico = req.params.topico;

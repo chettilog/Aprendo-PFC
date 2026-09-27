@@ -548,6 +548,8 @@ class _TelaPerfilState extends State<TelaPerfil> {
                                   Text('Nome: ${_dadosUsuario!['nome']}'),
                                   const SizedBox(height: 8),
                                   Text('E-mail: ${_dadosUsuario!['email']}'),
+                                                                    const SizedBox(height: 8),
+                                  Text('Perfil: ${_dadosUsuario!['perfil']}'),
                                   const SizedBox(height: 8),
                                   Text('Cadastrado em: ${_dadosUsuario!['criado_em']}'),
                                 ],
