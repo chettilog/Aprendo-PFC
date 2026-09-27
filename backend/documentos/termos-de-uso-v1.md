@@ -1,134 +1,149 @@
 # Termos de Uso — Aprendo
 
 **Versão 1.0**
-**Data de publicação: [preencher no commit final]**
+**Data de publicação: 27 de setembro de 2026**
 
 ## 1. Aceitação dos termos
 
-Ao criar uma conta e utilizar a plataforma Aprendo, o usuário concorda expressamente com estes Termos de Uso e com a Política de Privacidade, que constituem um contrato válido entre o usuário e a Aprendo Tecnologia Educacional Ltda. ("Aprendo").
+Estes Termos de Uso são as regras do Aprendo, uma plataforma da Aprendo Tecnologia Educacional Ltda. ("Aprendo", "nós").
 
-O aceite é registrado no momento do cadastro, incluindo data, hora e versão dos termos aceitos.
+Ao criar sua conta, você concorda com estes Termos e com a nossa Política de Privacidade. Guardamos a data, a hora e a versão dos termos que você aceitou.
 
 ## 2. Sobre o serviço
 
-O Aprendo é uma plataforma gamificada de aprendizagem voltada para estudantes do ensino médio. Diferentemente de plataformas tradicionais baseadas apenas em quizzes de múltipla escolha, o Aprendo utiliza mecanismos de **verificação por produção**, exigindo que o estudante produza conteúdo próprio (resumos, explicações, teach-back) para comprovar seu aprendizado.
+O Aprendo é uma plataforma gamificada de aprendizagem para estudantes do ensino médio. Aqui, não basta acertar um quiz de múltipla escolha: você mostra que aprendeu **produzindo seu próprio conteúdo**, como resumos, explicações e teach-back (explicar a matéria com as suas palavras, como se estivesse ensinando alguém). Chamamos isso de **verificação por produção**.
 
-Funcionalidades como produção de conteúdo, sistema completo de trilhas de aulas e mecânicas de gamificação com XP e conquistas estão em desenvolvimento e serão liberadas em versões futuras da plataforma.
+Algumas funcionalidades ainda estão em desenvolvimento e serão liberadas em versões futuras, como a produção de conteúdo, as trilhas completas de aulas e a gamificação com XP e conquistas.
 
 ## 3. Idade mínima e uso por menores de idade
 
-A idade mínima para uso do Aprendo é de **12 anos**.
+Para usar o Aprendo, você precisa ter pelo menos **12 anos**.
 
-Considerando que o público-alvo inclui menores de idade:
-- Recomenda-se que menores de 18 anos utilizem a plataforma com ciência e autorização dos responsáveis legais
-- Os responsáveis legais podem exercer, em nome do menor, os direitos previstos na Política de Privacidade
-- Não realizamos publicidade comportamental para nenhum usuário
+Se você tem menos de 18 anos:
 
-Está em desenvolvimento a funcionalidade de verificação de idade e autorização de responsáveis no cadastro.
+- Peça para seu pai, sua mãe ou seu responsável ler estes Termos e a Política de Privacidade com você e autorizar o uso da plataforma
+- Seu responsável pode exercer, em seu nome, os direitos descritos na Política de Privacidade
 
-## 4. Cadastro e conta do usuário
+Não fazemos publicidade direcionada para nenhum usuário.
 
-### 4.1 Requisitos do cadastro
-Para criar uma conta, o usuário deve fornecer:
+A verificação de idade e a autorização dos responsáveis no cadastro estão em desenvolvimento.
+
+## 4. Cadastro e conta
+
+### 4.1 O que você precisa para se cadastrar
+
 - Nome
 - E-mail válido
 - Senha
-- Aceite explícito destes Termos de Uso e da Política de Privacidade
+- Aceitar estes Termos de Uso e a Política de Privacidade
 
-### 4.2 Responsabilidades do usuário
-- Fornecer informações verdadeiras e atualizadas no cadastro
-- Manter suas credenciais de acesso (e-mail e senha) em segurança
-- Não compartilhar sua conta com terceiros
-- Assumir responsabilidade por todas as atividades realizadas em sua conta
+### 4.2 Suas responsabilidades
 
-### 4.3 Conta única por pessoa
-Cada usuário deve possuir apenas uma conta ativa na plataforma. A criação de múltiplas contas pode resultar em suspensão ou encerramento.
+- Informar dados verdadeiros e mantê-los atualizados
+- Guardar seu e-mail e sua senha em segurança
+- Não emprestar sua conta para ninguém
+- Lembrar que o que for feito na sua conta é responsabilidade sua
 
-## 5. Uso permitido
+### 4.3 Uma conta por pessoa
 
-O usuário compromete-se a utilizar o Aprendo exclusivamente para fins legítimos de aprendizagem, respeitando:
-- Os mecanismos de verificação por produção implementados no sistema
-- Os demais usuários e o conteúdo da plataforma
-- A legislação brasileira aplicável
+Cada pessoa pode ter apenas uma conta. Criar mais de uma pode levar à suspensão ou ao encerramento das contas.
 
-## 6. Uso proibido
+## 5. Como usar o Aprendo
 
-É expressamente proibido:
-- Tentar burlar os mecanismos anti-fraude do sistema
-- Criar múltiplas contas para o mesmo usuário
-- Utilizar a plataforma para fins comerciais sem autorização prévia
+O Aprendo é para aprender! Ao usar a plataforma, você se compromete a:
+
+- Respeitar os mecanismos de verificação por produção
+- Respeitar os outros usuários e o conteúdo da plataforma
+- Seguir as leis brasileiras
+
+## 6. O que não é permitido
+
+Não é permitido:
+
+- Tentar burlar os mecanismos anti-fraude
+- Criar mais de uma conta
+- Usar a plataforma para fins comerciais sem nossa autorização
 - Tentar acessar dados de outros usuários
-- Realizar engenharia reversa, descompilar ou tentar extrair código-fonte da plataforma
-- Utilizar ferramentas automatizadas (bots, scripts) para interagir com a plataforma
-- Publicar ou transmitir conteúdo ofensivo, discriminatório, ilegal ou que viole direitos de terceiros
+- Tentar copiar, descompilar ou extrair o código da plataforma (engenharia reversa)
+- Usar robôs ou scripts para interagir com a plataforma
+- Publicar ou enviar conteúdo ofensivo, discriminatório, ilegal ou que desrespeite direitos de outras pessoas
 
-O descumprimento pode resultar em suspensão ou encerramento imediato da conta, sem prejuízo de outras medidas legais cabíveis.
+Se essas regras forem descumpridas, a conta pode ser suspensa ou encerrada, além de outras medidas previstas em lei.
 
-## 7. Conteúdo produzido pelo usuário
+## 7. Conteúdo que você produz
 
-### 7.1 Propriedade
-O conteúdo produzido pelo usuário na plataforma (resumos, explicações, produções acadêmicas) permanece de propriedade intelectual do próprio usuário.
+### 7.1 O conteúdo é seu
 
-### 7.2 Licença de uso
-Ao produzir conteúdo na plataforma, o usuário concede ao Aprendo uma licença **não exclusiva, gratuita e limitada** para armazenar, exibir e processar esse conteúdo, **exclusivamente para fins pedagógicos dentro da plataforma**, incluindo mecanismos de verificação de aprendizado e feedback.
+Seus resumos, explicações e outras produções na plataforma continuam sendo seus.
 
-### 7.3 Responsabilidade sobre o conteúdo
-O usuário é integralmente responsável pelo conteúdo que produz e se compromete a não publicar material que viole direitos de terceiros ou a legislação vigente.
+### 7.2 O que podemos fazer com ele
+
+Ao produzir conteúdo no Aprendo, você nos autoriza, de forma gratuita e não exclusiva, a guardar, exibir e analisar esse conteúdo **apenas para fins pedagógicos dentro da plataforma**, como verificar seu aprendizado e dar feedback.
+
+### 7.3 Sua responsabilidade
+
+Você é responsável pelo que produz e se compromete a não publicar nada que desrespeite a lei ou os direitos de outras pessoas.
 
 ## 8. Suspensão e encerramento da conta
 
-### 8.1 Por parte do Aprendo
-A Aprendo pode suspender ou encerrar a conta do usuário, com ou sem aviso prévio, nos seguintes casos:
-- Violação destes Termos de Uso ou da Política de Privacidade
-- Tentativa de fraude nos mecanismos de verificação
-- Uso indevido da plataforma que prejudique outros usuários ou o serviço
-- Solicitação de autoridade competente
+### 8.1 Quando podemos suspender ou encerrar sua conta
 
-### 8.2 Por parte do usuário
-O usuário pode encerrar sua conta a qualquer momento, através do botão "Excluir minha conta" na tela de perfil. A exclusão é imediata e irreversível — dados pessoais são apagados conforme descrito na Política de Privacidade.
+- Se você descumprir estes Termos ou a Política de Privacidade
+- Se houver tentativa de fraude nos mecanismos de verificação
+- Se o uso da plataforma prejudicar outros usuários ou o serviço
+- Se uma autoridade competente pedir
+
+Sempre que possível, avisaremos você antes e explicaremos o motivo. Em casos graves, como fraude ou risco à segurança, a conta pode ser suspensa na hora.
+
+### 8.2 Quando você quiser sair
+
+Você pode excluir sua conta quando quiser, pelo botão **"Excluir minha conta"** na tela de perfil. A exclusão é imediata e não pode ser desfeita. O que acontece com seus dados está explicado na Política de Privacidade.
 
 ## 9. Limitação de responsabilidade
 
-O Aprendo é uma ferramenta complementar de aprendizagem e **não substitui o ensino formal** oferecido por instituições de ensino.
+O Aprendo é uma ferramenta para complementar seus estudos e **não substitui a escola** nem o ensino formal.
 
-Envidamos esforços para manter a plataforma disponível e funcional, mas não garantimos:
-- Disponibilidade ininterrupta do serviço
-- Ausência de erros ou falhas técnicas
-- Adequação da plataforma para qualquer finalidade específica além do uso pessoal educacional
+Fazemos o possível para manter a plataforma no ar e funcionando bem, mas não conseguimos garantir que:
 
-O Aprendo não se responsabiliza por prejuízos decorrentes de:
-- Uso indevido da plataforma pelo usuário
-- Interrupções de serviço causadas por terceiros (provedores de infraestrutura, redes de internet)
-- Perda de conteúdo produzido em caso de exclusão de conta pelo próprio usuário
+- Ela nunca vai sair do ar
+- Ela nunca vai ter erros ou falhas técnicas
+- Ela sirva para outros objetivos além do seu estudo pessoal
+
+Também não respondemos por problemas causados por:
+
+- Uso indevido da plataforma
+- Falhas de terceiros, como provedores de infraestrutura ou a sua conexão de internet
+- Perda de conteúdo quando você mesmo exclui sua conta
+
+Nada nestes Termos afasta os direitos que você tem pelo Código de Defesa do Consumidor.
 
 ## 10. Propriedade intelectual da plataforma
 
-Todos os direitos sobre a plataforma Aprendo — incluindo código-fonte, design, marca, funcionalidades e conteúdo produzido pela equipe — pertencem à Aprendo Tecnologia Educacional Ltda.
+Tudo o que forma a plataforma — código, design, marca, funcionalidades e conteúdos criados pela nossa equipe — pertence à Aprendo Tecnologia Educacional Ltda.
 
-É vedado ao usuário reproduzir, distribuir, modificar ou explorar comercialmente qualquer elemento da plataforma sem autorização prévia e por escrito.
+Você não pode copiar, distribuir, modificar ou usar comercialmente nenhuma parte da plataforma sem nossa autorização por escrito.
 
-## 11. Alterações nos Termos
+## 11. Mudanças nestes Termos
 
-Reservamo-nos o direito de alterar estes Termos de Uso a qualquer momento. Quando isso ocorrer:
-- A nova versão será publicada com data e número de versão atualizados
-- Usuários existentes serão notificados sobre as mudanças
-- Poderá ser solicitado novo aceite antes do próximo acesso à plataforma
+Estes Termos podem mudar com o tempo. Quando isso acontecer:
 
-Está em desenvolvimento a funcionalidade de solicitação automática de novo aceite quando a versão dos Termos for atualizada.
+- Publicaremos a nova versão com número e data atualizados
+- Avisaremos você sobre as mudanças
+- Poderemos pedir que você aceite a nova versão antes de continuar usando a plataforma
 
-O uso continuado da plataforma após a publicação de nova versão dos Termos implica em aceite tácito das alterações.
+A solicitação automática de novo aceite quando os Termos mudarem está em planejamento.
 
-## 12. Legislação aplicável e foro
+## 12. Legislação e foro
 
-Estes Termos são regidos pela legislação brasileira. Fica eleito o foro da comarca da sede da Aprendo Tecnologia Educacional Ltda. para dirimir quaisquer controvérsias, com renúncia expressa a qualquer outro, por mais privilegiado que seja.
+Estes Termos seguem as leis brasileiras. Se houver alguma disputa, ela pode ser levada ao foro da cidade onde você mora, como garante o Código de Defesa do Consumidor.
 
 ## 13. Contato
 
-Para dúvidas sobre estes Termos:
+Dúvidas sobre estes Termos: **contato@aprendo.com.br**
 
-Para questões relacionadas a dados pessoais e privacidade: 
+Assuntos sobre seus dados pessoais e privacidade: **privacidade@aprendo.com.br**
 
-O prazo de resposta é de até 15 dias corridos.
+Respondemos em até 15 dias corridos.
 
 ---
 
