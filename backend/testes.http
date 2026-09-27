@@ -15,7 +15,7 @@ POST http://localhost:3000/login
 Content-Type: application/json
 
 {
-  "email": "descartavel@teste.com",
+  "email": "teste@teste.com",
   "senha": "123456"
 }
 ### Perfil - sem token 
@@ -64,3 +64,14 @@ DELETE http://localhost:3000/minha-conta
 ### Excluir minha conta - com token (deve funcionar)
 DELETE http://localhost:3000/minha-conta
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAsImVtYWlsIjoiZGVzY2FydGF2ZWxAdGVzdGUuY29tIiwiaWF0IjoxNzkwNTE0MzA4LCJleHAiOjE3OTA1MjE1MDh9.FyqIqdyLnpFU1pL35uUoeqjlBfr9-vxlWD1O22Jcfbk
+
+### Wiki - sem token 
+GET http://localhost:3000/wiki/Fotossintese
+
+### Wiki - com token (deve funcionar)
+GET http://localhost:3000/wiki/Brasil
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ0ZXN0ZUB0ZXN0ZS5jb20iLCJpYXQiOjE3OTA1MTgzMzUsImV4cCI6MTc5MDUyNTUzNX0.0KsW_siOk2fDau-xaMXpofwuhv19tkRKm9yhjd1Engk
+
+### Wiki - tópico que não existe (deve dar 404)
+GET http://localhost:3000/wiki/asdfghjklzxcvbnm
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ0ZXN0ZUB0ZXN0ZS5jb20iLCJpYXQiOjE3OTA1MTgzMzUsImV4cCI6MTc5MDUyNTUzNX0.0KsW_siOk2fDau-xaMXpofwuhv19tkRKm9yhjd1Engk
