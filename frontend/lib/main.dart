@@ -436,6 +436,73 @@ class _TelaPerfilState extends State<TelaPerfil> {
       );
     }
   }
+    Future<void> _excluirConta() async {
+    // Diálogo de confirmação (LGPD: evita exclusão acidental)
+    final confirmou = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Excluir conta'),
+        content: const Text(
+          'Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita. '
+          'Seus dados pessoais serão removidos, e você não conseguirá mais acessar a plataforma.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sim, excluir'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmou != true) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.delete(
+        Uri.parse('http://localhost:3000/minha-conta'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Limpa o token e volta pra tela de login
+        await prefs.remove('token');
+        await prefs.remove('nome_usuario');
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Conta excluída com sucesso')),
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const TelaLogin()),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Erro ao excluir conta')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro de conexão: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -486,6 +553,18 @@ class _TelaPerfilState extends State<TelaPerfil> {
                                 ],
                               ),
                             ),
+                          ),
+                                                    const SizedBox(height: 32),
+                          // Seção LGPD: direito à exclusão da conta (Art. 18 da LGPD)
+                          OutlinedButton.icon(
+                            onPressed: _excluirConta,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red,
+                              side: const BorderSide(color: Colors.red),
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            ),
+                            icon: const Icon(Icons.delete_forever),
+                            label: const Text('Excluir minha conta'),
                           ),
                         ],
                       ),

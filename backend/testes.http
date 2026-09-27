@@ -15,7 +15,7 @@ POST http://localhost:3000/login
 Content-Type: application/json
 
 {
-  "email": "teste@teste.com",
+  "email": "descartavel@teste.com",
   "senha": "123456"
 }
 ### Perfil - sem token 
@@ -43,13 +43,24 @@ Content-Type: application/json
   "senha": "123456"
 }
 
-### Cadastro COM aceite dos termos (deve funcionar)
+### Cadastro COM aceite dos termos 
 POST http://localhost:3000/cadastro
 Content-Type: application/json
 
 {
   "nome": "Teste Com Termos",
-  "email": "comtermos@teste.com",
+  "email": "descartavel@teste.com",
   "senha": "123456",
   "aceitouTermos": true
 }
+### Buscar Termos de Uso (público)
+GET http://localhost:3000/termos
+
+### Buscar Política de Privacidade (público)
+GET http://localhost:3000/politica
+### Excluir minha conta - sem token (deve dar erro 401)
+DELETE http://localhost:3000/minha-conta
+
+### Excluir minha conta - com token (deve funcionar)
+DELETE http://localhost:3000/minha-conta
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAsImVtYWlsIjoiZGVzY2FydGF2ZWxAdGVzdGUuY29tIiwiaWF0IjoxNzkwNTE0MzA4LCJleHAiOjE3OTA1MjE1MDh9.FyqIqdyLnpFU1pL35uUoeqjlBfr9-vxlWD1O22Jcfbk

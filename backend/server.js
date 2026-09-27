@@ -226,6 +226,41 @@ app.get('/perfil', verificarToken, async (req, res) => {
     res.status(500).json({ error: 'Erro ao buscar perfil', detalhes: err.message });
   }
 });
+// Rota protegida: permite o usuário logado excluir a própria conta (LGPD - direito à exclusão)
+app.delete('/minha-conta', verificarToken, async (req, res) => {
+  try {
+    const usuarioId = req.usuario.id;
+
+    // Busca dados do usuário antes de apagar (pra usar no log)
+    const busca = await pool.query(
+      'SELECT email FROM usuarios WHERE id = $1',
+      [usuarioId]
+    );
+
+    if (busca.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    const emailUsuario = busca.rows[0].email;
+
+    // Apaga o usuário. Graças ao ON DELETE SET NULL na tabela logs,
+    // os logs dele permanecem para auditoria, mas com usuario_id = NULL
+    await pool.query('DELETE FROM usuarios WHERE id = $1', [usuarioId]);
+
+    // Registra o evento de exclusão (usuario_id = null porque o usuário não existe mais)
+    await registrarLog(
+      null,
+      'exclusao_conta',
+      `Conta excluída pelo próprio titular: ${emailUsuario}`,
+      req.ip,
+      true
+    );
+
+    res.json({ message: 'Sua conta foi excluída com sucesso. Sentimos sua falta!' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao excluir conta', detalhes: err.message });
+  }
+});
 
 // Rota protegida: retorna os logs de auditoria
 app.get('/logs', verificarToken, async (req, res) => {
