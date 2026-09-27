@@ -518,7 +518,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
           ),
         ],
       ),
-      body: Center(
+            body: SingleChildScrollView(child: Center(
         child: _carregando
             ? const CircularProgressIndicator()
             : _erro.isNotEmpty
@@ -570,6 +570,40 @@ class _TelaPerfilState extends State<TelaPerfil> {
                             icon: const Icon(Icons.search),
                             label: const Text('Explorar conteúdo'),
                           ),
+                                                    const SizedBox(height: 24),
+                          const Divider(),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Documentos legais',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const TelaTermos()),
+                                  );
+                                },
+                                icon: const Icon(Icons.description_outlined, size: 18),
+                                label: const Text('Termos de Uso'),
+                              ),
+                              const SizedBox(width: 8),
+                              TextButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const TelaPolitica()),
+                                  );
+                                },
+                                icon: const Icon(Icons.privacy_tip_outlined, size: 18),
+                                label: const Text('Política de Privacidade'),
+                              ),
+                            ],
+                          ),
                                                     const SizedBox(height: 32),
                           // Seção LGPD: direito à exclusão da conta (Art. 18 da LGPD)
                           OutlinedButton.icon(
@@ -587,6 +621,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
                     ),
                   ),
       ),
+              ),
     );
   }
 }
