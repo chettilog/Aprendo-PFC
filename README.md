@@ -31,7 +31,6 @@ Este repositório será atualizado continuamente ao longo do desenvolvimento e p
 ## Equipe
 
 - [Joao Pedro Marchetti] — Desenvolvimento
-- [Matheus Paiva] — Desenvolvimento
 - Orientador(a):  Alessandro Aparecido da Silva Horas
   
 
