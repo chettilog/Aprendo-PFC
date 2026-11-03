@@ -469,13 +469,44 @@ app.get('/aulas/:id', verificarToken, async (req, res) => {
 });
 
 
-// ===== Produção do aluno (RF06) =====
+// ===== Feedback e XP (RF07 e RF08) =====
 
-// Limites do texto da produção (ajuste conforme a regra que vocês definirem)
-const PRODUCAO_MIN = 40;
-const PRODUCAO_MAX = 3000;
+const XP_POR_AULA = 50;     // XP na primeira produção suficiente de cada aula
+const XP_POR_NIVEL = 100;   // XP necessário para subir de nível
+const PALAVRAS_MIN = 2;     // palavras-chave da aula que a produção deve citar
 
-// Registra a produção (texto) do aluno sobre uma aula
+// Remove acentos e deixa em minúsculas, para comparar os textos
+function normalizar(texto) {
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function calcularNivel(xpTotal) {
+  return Math.floor(xpTotal / XP_POR_NIVEL) + 1;
+}
+
+// Avalia a produção: suficiente se citar ao menos PALAVRAS_MIN palavras-chave da aula
+function avaliarProducao(texto, palavrasChave) {
+  const lista = (palavrasChave || '').split(',').map(p => p.trim()).filter(Boolean);
+  const alvo = normalizar(texto);
+  const citadas = lista.filter(p => alvo.includes(normalizar(p)));
+  const faltantes = lista.filter(p => !citadas.includes(p));
+  const suficiente = citadas.length >= Math.min(PALAVRAS_MIN, lista.length);
+
+  let comentario;
+  if (!suficiente) {
+    comentario = `Tente explicar também: ${faltantes.join(', ')}.`;
+  } else if (citadas.length > 0) {
+    comentario = `Boa explicação! Você citou: ${citadas.join(', ')}.`;
+  } else {
+    comentario = 'Produção registrada com sucesso.';
+  }
+  return {
+    resultado: suficiente ? 'suficiente' : 'insuficiente',
+    comentario: comentario.slice(0, 255)
+  };
+}
+
+// Registra a produção (texto), avalia (RF07) e atribui XP (RF08)
 app.post('/aulas/:id/producoes', verificarToken, async (req, res) => {
   const { id } = req.params;
   if (!idValido(id)) {
@@ -494,9 +525,10 @@ app.post('/aulas/:id/producoes', verificarToken, async (req, res) => {
     return res.status(400).json({ error: `A produção deve ter no máximo ${PRODUCAO_MAX} caracteres` });
   }
 
+  let client;
   try {
     const aula = await pool.query(
-      `SELECT a.id
+      `SELECT a.id, a.palavras_chave
        FROM aulas a
        JOIN trilhas t ON t.id = a.trilha_id
        WHERE a.id = $1 AND t.ativa = true`,
@@ -506,19 +538,58 @@ app.post('/aulas/:id/producoes', verificarToken, async (req, res) => {
       return res.status(404).json({ error: 'Aula não encontrada' });
     }
 
-    const result = await pool.query(
+    const avaliacao = avaliarProducao(texto, aula.rows[0].palavras_chave);
+
+    // Transação: produção, feedback e XP são gravados juntos ou nenhum
+    client = await pool.connect();
+    await client.query('BEGIN');
+
+    const producao = await client.query(
       `INSERT INTO producoes (usuario_id, aula_id, tipo, conteudo)
        VALUES ($1, $2, 'texto', $3)
        RETURNING id, aula_id, tipo, enviada_em`,
       [req.usuario.id, id, texto]
     );
-    res.status(201).json({ producao: result.rows[0] });
+
+    await client.query(
+      'INSERT INTO feedbacks (producao_id, resultado, comentario) VALUES ($1, $2, $3)',
+      [producao.rows[0].id, avaliacao.resultado, avaliacao.comentario]
+    );
+
+    let xpGanho = 0;
+    if (avaliacao.resultado === 'suficiente') {
+      // A mesma aula não gera XP duas vezes (UNIQUE usuario_id + aula_id)
+      const xp = await client.query(
+        `INSERT INTO movimentacoes_xp (usuario_id, aula_id, valor, motivo)
+         VALUES ($1, $2, $3, 'Produção suficiente')
+         ON CONFLICT (usuario_id, aula_id) DO NOTHING
+         RETURNING valor`,
+        [req.usuario.id, id, XP_POR_AULA]
+      );
+      xpGanho = xp.rows.length > 0 ? xp.rows[0].valor : 0;
+    }
+
+    const total = await client.query(
+      'SELECT COALESCE(SUM(valor), 0)::int AS total FROM movimentacoes_xp WHERE usuario_id = $1',
+      [req.usuario.id]
+    );
+    await client.query('COMMIT');
+
+    const xpTotal = total.rows[0].total;
+    res.status(201).json({
+      producao: producao.rows[0],
+      feedback: { resultado: avaliacao.resultado, comentario: avaliacao.comentario },
+      xp: { ganho: xpGanho, total: xpTotal, nivel: calcularNivel(xpTotal) }
+    });
   } catch (err) {
+    if (client) await client.query('ROLLBACK').catch(() => {});
     // 23503 = violação de chave estrangeira (ex.: conta já excluída com token ainda válido)
     if (err.code === '23503') {
       return res.status(404).json({ error: 'Usuário ou aula não encontrados' });
     }
     res.status(500).json({ error: 'Erro ao registrar produção', detalhes: err.message });
+  } finally {
+    if (client) client.release();
   }
 });
 
