@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'validacoes.dart';
 import 'api.dart';
 import 'tema.dart';
+import 'tela_inicio.dart';
 
 void main() {
   runApp(const AprendoApp());
@@ -74,7 +75,7 @@ class _TelaLoginState extends State<TelaLogin> {
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const TelaPerfil()),
+            MaterialPageRoute(builder: (context) => const TelaInicio()),
           );
         }
       } else {

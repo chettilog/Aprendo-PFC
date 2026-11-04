@@ -454,9 +454,18 @@ app.get('/trilhas/:id/aulas', verificarToken, async (req, res) => {
       return res.status(404).json({ error: 'Trilha não encontrada' });
     }
 
-    const aulas = await pool.query(
-      'SELECT id, titulo, ordem FROM aulas WHERE trilha_id = $1 ORDER BY ordem',
-      [id]
+        const aulas = await pool.query(
+      `SELECT a.id, a.titulo, a.ordem,
+              EXISTS (
+                SELECT 1 FROM producoes p
+                JOIN feedbacks f ON f.producao_id = p.id
+                WHERE p.aula_id = a.id AND p.usuario_id = $2
+                  AND f.resultado = 'suficiente'
+              ) AS concluida
+       FROM aulas a
+       WHERE a.trilha_id = $1
+       ORDER BY a.ordem`,
+      [id, req.usuario.id]
     );
     res.json({ trilha: trilha.rows[0], aulas: aulas.rows });
   } catch (err) {
