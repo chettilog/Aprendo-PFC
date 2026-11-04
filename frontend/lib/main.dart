@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'validacoes.dart';
+import 'api.dart';
+import 'tema.dart';
 
 void main() {
   runApp(const AprendoApp());
@@ -15,10 +17,8 @@ class AprendoApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Aprendo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+            theme: temaAprendo(),
+      debugShowCheckedModeBanner: false,
       home: const TelaLogin(),
     );
   }
@@ -54,7 +54,7 @@ class _TelaLoginState extends State<TelaLogin> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:3000/login'),
+        Uri.parse('$apiBase/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': _emailController.text,
@@ -208,7 +208,7 @@ class _TelaCadastroState extends State<TelaCadastro> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:3000/cadastro'),
+        Uri.parse('$apiBase/cadastro'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'nome': _nomeController.text,
@@ -423,7 +423,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
 
       // Chama a rota protegida enviando o token no cabeçalho
       final response = await http.get(
-        Uri.parse('http://localhost:3000/perfil'),
+        Uri.parse('$apiBase/perfil'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -494,7 +494,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
       final token = prefs.getString('token');
 
       final response = await http.delete(
-        Uri.parse('http://localhost:3000/minha-conta'),
+        Uri.parse('$apiBase/minha-conta'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -679,7 +679,7 @@ class _TelaTermosState extends State<TelaTermos> {
   Future<void> _carregarTermos() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/termos'),
+        Uri.parse('$apiBase/termos'),
       );
 
       final data = jsonDecode(response.body);
@@ -750,7 +750,7 @@ class _TelaPoliticaState extends State<TelaPolitica> {
   Future<void> _carregarPolitica() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/politica'),
+        Uri.parse('$apiBase/politica'),
       );
 
       final data = jsonDecode(response.body);
@@ -827,7 +827,7 @@ class _TelaBuscaWikiState extends State<TelaBuscaWiki> {
       final token = prefs.getString('token');
 
       final response = await http.get(
-        Uri.parse('http://localhost:3000/wiki/${Uri.encodeComponent(topico)}'),
+        Uri.parse('$apiBase/wiki/${Uri.encodeComponent(topico)}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
