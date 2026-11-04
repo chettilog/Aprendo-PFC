@@ -101,3 +101,67 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZW1haWwiO
 ### Logs como ADMIN 200
 GET http://localhost:3000/logs
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTgsImVtYWlsIjoiYWRtaW5AYXByZW5kby5jb20iLCJpYXQiOjE3OTA1NDk4OTMsImV4cCI6MTc5MDU1NzA5M30.t6LBIYYJf4oJRuAPaXP_9jGMT_DreTGJcvjsGq9bPHw
+
+### Login do aluno (guarda o token para os proximos testes)
+# @name loginTrilhas
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "comtermos@teste.com",
+  "senha": "123456"
+}
+
+### Listar trilhas (RF04) - esperado 200
+GET http://localhost:3000/trilhas
+Authorization: Bearer {{loginTrilhas.response.body.token}}
+
+### Listar aulas da trilha 1 (RF05) - esperado 200
+GET http://localhost:3000/trilhas/1/aulas
+Authorization: Bearer {{loginTrilhas.response.body.token}}
+
+### Abrir a aula 1 (RF05) - esperado 200
+GET http://localhost:3000/aulas/1
+Authorization: Bearer {{loginTrilhas.response.body.token}}
+
+### Id invalido - esperado 400
+GET http://localhost:3000/aulas/abc
+Authorization: Bearer {{loginTrilhas.response.body.token}}
+
+### Producao curta demais - esperado 400
+POST http://localhost:3000/aulas/1/producoes
+Authorization: Bearer {{loginTrilhas.response.body.token}}
+Content-Type: application/json
+
+{
+  "conteudo": "muito curta"
+}
+
+### Producao insuficiente - esperado 201, feedback insuficiente, XP ganho 0
+POST http://localhost:3000/aulas/1/producoes
+Authorization: Bearer {{loginTrilhas.response.body.token}}
+Content-Type: application/json
+
+{
+  "conteudo": "Nao lembro direito o que foi explicado nessa aula, mas achei interessante."
+}
+
+### Producao suficiente - esperado 201, feedback suficiente, XP ganho 50 (so na primeira vez)
+POST http://localhost:3000/aulas/1/producoes
+Authorization: Bearer {{loginTrilhas.response.body.token}}
+Content-Type: application/json
+
+{
+  "conteudo": "Uma função relaciona cada valor de entrada do domínio a um único valor de saída no contradomínio."
+}
+
+### Listar minhas producoes da aula 1 - esperado 200
+GET http://localhost:3000/aulas/1/producoes
+Authorization: Bearer {{loginTrilhas.response.body.token}}
+
+### Dashboard (RF03 e RF13) - esperado 200
+GET http://localhost:3000/dashboard
+Authorization: Bearer {{loginTrilhas.response.body.token}}
+
+### Sem token - esperado 401
+GET http://localhost:3000/trilhas
