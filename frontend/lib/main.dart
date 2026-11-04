@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'validacoes.dart';
 
 void main() {
   runApp(const AprendoApp());
@@ -40,6 +41,12 @@ class _TelaLoginState extends State<TelaLogin> {
   String _mensagem = '';
 
   Future<void> _fazerLogin() async {
+        final erro = validarEmail(_emailController.text) ??
+        validarSenhaLogin(_senhaController.text);
+    if (erro != null) {
+      setState(() => _mensagem = 'Erro: $erro');
+      return;
+    }
     setState(() {
       _carregando = true;
       _mensagem = '';
@@ -106,16 +113,21 @@ class _TelaLoginState extends State<TelaLogin> {
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 32),
-                TextField(
+                                TextFormField(
                   controller: _emailController,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  validator: validarEmail,
+                  keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
                     labelText: 'E-mail',
                     border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
-                TextField(
+                TextFormField(
                   controller: _senhaController,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  validator: validarSenhaLogin,
                   obscureText: true,
                   decoration: const InputDecoration(
                     labelText: 'Senha',
@@ -182,6 +194,13 @@ class _TelaCadastroState extends State<TelaCadastro> {
   String _mensagem = '';
 
   Future<void> _cadastrar() async {
+        final erro = validarNome(_nomeController.text) ??
+        validarEmail(_emailController.text) ??
+        validarSenha(_senhaController.text);
+    if (erro != null) {
+      setState(() => _mensagem = 'Erro: $erro');
+      return;
+    }
     setState(() {
       _carregando = true;
       _mensagem = '';
@@ -205,9 +224,7 @@ class _TelaCadastroState extends State<TelaCadastro> {
         setState(() {
           _mensagem = 'Cadastro realizado com sucesso! Faça login para continuar.';
         });
-        _nomeController.clear();
-        _emailController.clear();
-        _senhaController.clear();
+       
       } else {
         setState(() {
           _mensagem = 'Erro: ${data['error'] ?? 'Falha no cadastro'}';
@@ -244,28 +261,38 @@ class _TelaCadastroState extends State<TelaCadastro> {
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 32),
-                TextField(
+                                TextFormField(
                   controller: _nomeController,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  validator: validarNome,
+                  maxLength: 100,
                   decoration: const InputDecoration(
                     labelText: 'Nome',
                     border: OutlineInputBorder(),
+                    counterText: '',
                   ),
                 ),
                 const SizedBox(height: 16),
-                TextField(
+                TextFormField(
                   controller: _emailController,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  validator: validarEmail,
+                  keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
                     labelText: 'E-mail',
                     border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
-                TextField(
+                TextFormField(
                   controller: _senhaController,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  validator: validarSenha,
                   obscureText: true,
                   decoration: const InputDecoration(
                     labelText: 'Senha',
                     border: OutlineInputBorder(),
+                    helperText: 'Mínimo de 6 caracteres',
                   ),
                 ),
                 const SizedBox(height: 24),

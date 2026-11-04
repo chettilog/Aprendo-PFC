@@ -165,3 +165,7 @@ Authorization: Bearer {{loginTrilhas.response.body.token}}
 
 ### Sem token - esperado 401
 GET http://localhost:3000/trilhas
+
+### Perfil (RF02) - esperado 200
+GET http://localhost:3000/perfil
+Authorization: Bearer {{loginTrilhas.response.body.token}}

@@ -104,16 +104,36 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
+// Valida os campos do cadastro; retorna a mensagem de erro ou null se estiver tudo certo
+function validarCadastro(nome, email, senha) {
+  if (!nome || !email || typeof senha !== 'string' || senha.length === 0) {
+    return 'Nome, e-mail e senha são obrigatórios';
+  }
+  if (nome.length < 2 || nome.length > 100) {
+    return 'O nome deve ter entre 2 e 100 caracteres';
+  }
+  if (email.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return 'Informe um e-mail válido';
+  }
+  if (senha.length < 6 || senha.length > 72) {
+    return 'A senha deve ter entre 6 e 72 caracteres';
+  }
+  return null;
+}
+
 // Rota de cadastro de usuário
 app.post('/cadastro', async (req, res) => {
   try {
-    const { nome, email, senha, aceitouTermos } = req.body;
+        const { senha, aceitouTermos } = req.body || {};
+    const nome = typeof req.body?.nome === 'string' ? req.body.nome.trim() : '';
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
 
-    if (!nome || !email || !senha) {
-      return res.status(400).json({ error: 'Nome, e-mail e senha são obrigatórios' });
+    const erroValidacao = validarCadastro(nome, email, senha);
+    if (erroValidacao) {
+      return res.status(400).json({ error: erroValidacao });
     }
-
-    // Validação LGPD: exige aceite explícito dos termos antes de criar conta
+    
+  // Validação LGPD: exige aceite explícito dos termos antes de criar conta
     if (!aceitouTermos) {
       return res.status(400).json({ 
         error: 'É necessário aceitar os Termos de Uso e a Política de Privacidade' 
@@ -240,7 +260,7 @@ app.post('/login', async (req, res) => {
 app.get('/perfil', verificarToken, async (req, res) => {
   try {
     const result = await pool.query(
-      
+            'SELECT id, nome, email, perfil, criado_em FROM usuarios WHERE id = $1',
       [req.usuario.id]
     );
 
@@ -505,6 +525,12 @@ function avaliarProducao(texto, palavrasChave) {
     comentario: comentario.slice(0, 255)
   };
 }
+
+// ===== Produção do aluno (RF06) =====
+
+// Limites do texto da produção (ajuste conforme a regra definida)
+const PRODUCAO_MIN = 40;
+const PRODUCAO_MAX = 3000;
 
 // Registra a produção (texto), avalia (RF07) e atribui XP (RF08)
 app.post('/aulas/:id/producoes', verificarToken, async (req, res) => {
