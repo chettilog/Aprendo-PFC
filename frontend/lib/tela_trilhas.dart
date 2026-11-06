@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'main.dart';
 import 'tema.dart';
+import 'tela_aula.dart';
 
 // ============================================================
 // ESTADO DE ERRO (reutilizado pelas telas novas)
@@ -249,13 +250,17 @@ class _TelaTrilhaState extends State<TelaTrilha> {
 
   void _recarregar() => setState(() => _futuro = _carregar());
 
-  // A tela da aula entra no próximo passo
+    // Abre a aula e, ao voltar, recarrega o caminho (a próxima aula pode ter sido liberada)
   Future<void> _abrirAula(Map<String, dynamic> aula) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Abrindo: ${aula['titulo']}')),
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TelaAula(id: aula['id'], concluida: aula['concluida'] == true),
+      ),
     );
+    if (mounted) _recarregar();
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
