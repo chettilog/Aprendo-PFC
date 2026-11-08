@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'main.dart';
 import 'tela_trilhas.dart';
+import 'tela_painel.dart';
 
 // ============================================================
 // TELA INICIAL: barra de navegação com Início, Trilhas e Perfil
@@ -19,7 +20,7 @@ class _TelaInicioState extends State<TelaInicio> {
   Widget build(BuildContext context) {
     // Cada aba é recriada ao ser aberta, para mostrar sempre os dados atualizados
     final Widget conteudo = switch (_aba) {
-      0 => const _PainelProvisorio(),
+      0 => const TelaPainel(),
       1 => const TelaTrilhas(),
       _ => const TelaPerfil(),
     };
@@ -51,15 +52,3 @@ class _TelaInicioState extends State<TelaInicio> {
   }
 }
 
-// O dashboard entra no lugar deste painel no próximo passo
-class _PainelProvisorio extends StatelessWidget {
-  const _PainelProvisorio();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Início')),
-      body: const Center(child: Text('Dashboard em construção')),
-    );
-  }
-}
