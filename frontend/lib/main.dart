@@ -945,7 +945,7 @@ class _TelaBuscaWikiState extends State<TelaBuscaWiki> {
                                   _resultado!['imagem'],
                                   height: 200,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                                  errorBuilder: (context, erro, pilha) => const SizedBox.shrink(),
                                 ),
                               ),
                             ),
