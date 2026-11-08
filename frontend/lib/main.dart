@@ -323,7 +323,7 @@ class _TelaCadastroState extends State<TelaCadastro> {
                               'Termos de Uso',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.deepPurple,
+                                color: CoresAprendo.turquesa,
                                 decoration: TextDecoration.underline,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -341,7 +341,7 @@ class _TelaCadastroState extends State<TelaCadastro> {
                               'Política de Privacidade',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.deepPurple,
+                                color: CoresAprendo.turquesa,
                                 decoration: TextDecoration.underline,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -558,7 +558,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.account_circle, size: 100, color: Colors.deepPurple),
+                          const Icon(Icons.account_circle, size: 100, color: CoresAprendo.turquesa),
                           const SizedBox(height: 24),
                           Text(
                             'Bem-vindo, ${_dadosUsuario!['nome']}!',
