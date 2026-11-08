@@ -1,40 +1,18 @@
-### Teste de conexão com o banco
-GET http://localhost:3000/test-db
+# Testes da API do Aprendo (extensão REST Client)
+# Ligue o servidor (node server.js). Em cada seção, envie primeiro o login.
+# Contas de teste: aluno comtermos@teste.com | admin admin@aprendo.com | senha 123456
 
-### Cadastro de usuário
-POST http://localhost:3000/cadastro
-Content-Type: application/json
+@api = http://localhost:3000
 
-{
-  "nome": "Teste",
-  "email": "teste@teste.com",
-  "senha": "123456"
-}
-### Login de usuário
-POST http://localhost:3000/login
-Content-Type: application/json
+### ===================== SERVIDOR =====================
 
-{
-  "email": "teste@teste.com",
-  "senha": "123456"
-}
-### Perfil - sem token 
-GET http://localhost:3000/perfil
+### Conexão com o banco - esperado 200
+GET {{api}}/test-db
 
-### Perfil - com token válido 
-GET http://localhost:3000/perfil
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ0ZXN0ZUB0ZXN0ZS5jb20iLCJpYXQiOjE3OTAwODkyNzQsImV4cCI6MTc5MDA5NjQ3NH0.nR1Ci6Pl3_9wzJKZN9ckcaC7IMAxKq8l__B6d6ukaE4
+### ===================== CADASTRO (RF01) =====================
 
-### Perfil - com token inválido 
-GET http://localhost:3000/perfil
-Authorization: Bearer token_falso_qualquer
-
-### Ver logs (protegida - precisa de token)
-GET http://localhost:3000/logs
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ0ZXN0ZUB0ZXN0ZS5jb20iLCJpYXQiOjE3OTAzNTUxMjksImV4cCI6MTc5MDM2MjMyOX0.0Umc-FZfXTeYhm5fuf6l07lJDcBaRQFeWglei1YiYeg
-
-### Cadastro SEM aceitar termos 
-POST http://localhost:3000/cadastro
+### Sem aceitar os termos - esperado 400
+POST {{api}}/cadastro
 Content-Type: application/json
 
 {
@@ -43,41 +21,55 @@ Content-Type: application/json
   "senha": "123456"
 }
 
-### Cadastro COM aceite dos termos 
-POST http://localhost:3000/cadastro
+### Nome curto - esperado 400
+POST {{api}}/cadastro
+Content-Type: application/json
+
+{
+  "nome": "A",
+  "email": "valido@teste.com",
+  "senha": "123456",
+  "aceitouTermos": true
+}
+
+### E-mail invalido - esperado 400
+POST {{api}}/cadastro
+Content-Type: application/json
+
+{
+  "nome": "Teste",
+  "email": "email-invalido",
+  "senha": "123456",
+  "aceitouTermos": true
+}
+
+### Senha curta - esperado 400
+POST {{api}}/cadastro
+Content-Type: application/json
+
+{
+  "nome": "Teste",
+  "email": "valido@teste.com",
+  "senha": "123",
+  "aceitouTermos": true
+}
+
+### E-mail ja cadastrado - esperado 409
+POST {{api}}/cadastro
 Content-Type: application/json
 
 {
   "nome": "Teste Com Termos",
-  "email": "descartavel@teste.com",
+  "email": "comtermos@teste.com",
   "senha": "123456",
   "aceitouTermos": true
 }
-### Buscar Termos de Uso (público)
-GET http://localhost:3000/termos
 
-### Buscar Política de Privacidade (público)
-GET http://localhost:3000/politica
-### Excluir minha conta - sem token (deve dar erro 401)
-DELETE http://localhost:3000/minha-conta
+### ===================== LOGIN (RF02) E PERFIS (RF18) =====================
 
-### Excluir minha conta - com token (deve funcionar)
-DELETE http://localhost:3000/minha-conta
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAsImVtYWlsIjoiZGVzY2FydGF2ZWxAdGVzdGUuY29tIiwiaWF0IjoxNzkwNTE0MzA4LCJleHAiOjE3OTA1MjE1MDh9.FyqIqdyLnpFU1pL35uUoeqjlBfr9-vxlWD1O22Jcfbk
-
-### Wiki - sem token 
-GET http://localhost:3000/wiki/Fotossintese
-
-### Wiki - com token (deve funcionar)
-GET http://localhost:3000/wiki/Brasil
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ0ZXN0ZUB0ZXN0ZS5jb20iLCJpYXQiOjE3OTA1MTgzMzUsImV4cCI6MTc5MDUyNTUzNX0.0KsW_siOk2fDau-xaMXpofwuhv19tkRKm9yhjd1Engk
-
-### Wiki - tópico que não existe (deve dar 404)
-GET http://localhost:3000/wiki/asdfghjklzxcvbnm
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ0ZXN0ZUB0ZXN0ZS5jb20iLCJpYXQiOjE3OTA1MTgzMzUsImV4cCI6MTc5MDUyNTUzNX0.0KsW_siOk2fDau-xaMXpofwuhv19tkRKm9yhjd1Engk
-
-### Login ALUNO
-POST http://localhost:3000/login
+### Login do aluno (guarda o token para os proximos testes)
+# @name loginAluno
+POST {{api}}/login
 Content-Type: application/json
 
 {
@@ -85,8 +77,9 @@ Content-Type: application/json
   "senha": "123456"
 }
 
-### Login ADMIN
-POST http://localhost:3000/login
+### Login do admin (guarda o token do admin)
+# @name loginAdmin
+POST {{api}}/login
 Content-Type: application/json
 
 {
@@ -94,43 +87,81 @@ Content-Type: application/json
   "senha": "123456"
 }
 
-### Logs como ALUNO 403
-GET http://localhost:3000/logs
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZW1haWwiOiJjb210ZXJtb3NAdGVzdGUuY29tIiwiaWF0IjoxNzkwNTQ5ODY3LCJleHAiOjE3OTA1NTcwNjd9.rm8qtm8Kk7kJrez_3Ilnt79ImVd6aaDvFKtlzO6Werk
-
-### Logs como ADMIN 200
-GET http://localhost:3000/logs
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTgsImVtYWlsIjoiYWRtaW5AYXByZW5kby5jb20iLCJpYXQiOjE3OTA1NDk4OTMsImV4cCI6MTc5MDU1NzA5M30.t6LBIYYJf4oJRuAPaXP_9jGMT_DreTGJcvjsGq9bPHw
-
-### Login do aluno (guarda o token para os proximos testes)
-# @name loginTrilhas
-POST http://localhost:3000/login
+### Senha incorreta - esperado 401
+POST {{api}}/login
 Content-Type: application/json
 
 {
   "email": "comtermos@teste.com",
-  "senha": "123456"
+  "senha": "senhaerrada"
 }
 
-### Listar trilhas (RF04) - esperado 200
-GET http://localhost:3000/trilhas
-Authorization: Bearer {{loginTrilhas.response.body.token}}
+### Perfil sem token - esperado 401
+GET {{api}}/perfil
 
-### Listar aulas da trilha 1 (RF05) - esperado 200
-GET http://localhost:3000/trilhas/1/aulas
-Authorization: Bearer {{loginTrilhas.response.body.token}}
+### Perfil com token invalido - esperado 403
+GET {{api}}/perfil
+Authorization: Bearer token_falso_qualquer
 
-### Abrir a aula 1 (RF05) - esperado 200
-GET http://localhost:3000/aulas/1
-Authorization: Bearer {{loginTrilhas.response.body.token}}
+### Perfil do aluno - esperado 200
+GET {{api}}/perfil
+Authorization: Bearer {{loginAluno.response.body.token}}
+
+### Logs como aluno - esperado 403 (o acesso negado fica registrado)
+GET {{api}}/logs
+Authorization: Bearer {{loginAluno.response.body.token}}
+
+### Logs como admin - esperado 200
+GET {{api}}/logs
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+### ===================== TERMOS E POLITICA (RF20) =====================
+
+### Termos de Uso (publico) - esperado 200
+GET {{api}}/termos
+
+### Politica de Privacidade (publico) - esperado 200
+GET {{api}}/politica
+
+### ===================== WIKIPEDIA (RF22) =====================
+
+### Wiki sem token - esperado 401
+GET {{api}}/wiki/Brasil
+
+### Wiki com token - esperado 200
+GET {{api}}/wiki/Brasil
+Authorization: Bearer {{loginAluno.response.body.token}}
+
+### Wiki com topico inexistente - esperado 404
+GET {{api}}/wiki/asdfghjklzxcvbnm
+Authorization: Bearer {{loginAluno.response.body.token}}
+
+### ===================== CONTEUDO (RF04 e RF05) =====================
+
+### Listar trilhas - esperado 200
+GET {{api}}/trilhas
+Authorization: Bearer {{loginAluno.response.body.token}}
+
+### Listar aulas da trilha 1 (com o campo concluida) - esperado 200
+GET {{api}}/trilhas/1/aulas
+Authorization: Bearer {{loginAluno.response.body.token}}
+
+### Abrir a aula 1 - esperado 200
+GET {{api}}/aulas/1
+Authorization: Bearer {{loginAluno.response.body.token}}
 
 ### Id invalido - esperado 400
-GET http://localhost:3000/aulas/abc
-Authorization: Bearer {{loginTrilhas.response.body.token}}
+GET {{api}}/aulas/abc
+Authorization: Bearer {{loginAluno.response.body.token}}
+
+### Trilhas sem token - esperado 401
+GET {{api}}/trilhas
+
+### ===================== PRODUCAO, FEEDBACK E XP (RF06 a RF08) =====================
 
 ### Producao curta demais - esperado 400
-POST http://localhost:3000/aulas/1/producoes
-Authorization: Bearer {{loginTrilhas.response.body.token}}
+POST {{api}}/aulas/1/producoes
+Authorization: Bearer {{loginAluno.response.body.token}}
 Content-Type: application/json
 
 {
@@ -138,34 +169,60 @@ Content-Type: application/json
 }
 
 ### Producao insuficiente - esperado 201, feedback insuficiente, XP ganho 0
-POST http://localhost:3000/aulas/1/producoes
-Authorization: Bearer {{loginTrilhas.response.body.token}}
+POST {{api}}/aulas/1/producoes
+Authorization: Bearer {{loginAluno.response.body.token}}
 Content-Type: application/json
 
 {
   "conteudo": "Nao lembro direito o que foi explicado nessa aula, mas achei interessante."
 }
 
-### Producao suficiente - esperado 201, feedback suficiente, XP ganho 50 (so na primeira vez)
-POST http://localhost:3000/aulas/1/producoes
-Authorization: Bearer {{loginTrilhas.response.body.token}}
+### Producao suficiente - esperado 201, feedback suficiente (XP 50 so na primeira vez)
+POST {{api}}/aulas/1/producoes
+Authorization: Bearer {{loginAluno.response.body.token}}
 Content-Type: application/json
 
 {
   "conteudo": "Uma função relaciona cada valor de entrada do domínio a um único valor de saída no contradomínio."
 }
 
-### Listar minhas producoes da aula 1 - esperado 200
-GET http://localhost:3000/aulas/1/producoes
-Authorization: Bearer {{loginTrilhas.response.body.token}}
+### Minhas producoes na aula 1 - esperado 200
+GET {{api}}/aulas/1/producoes
+Authorization: Bearer {{loginAluno.response.body.token}}
 
-### Dashboard (RF03 e RF13) - esperado 200
-GET http://localhost:3000/dashboard
-Authorization: Bearer {{loginTrilhas.response.body.token}}
+### ===================== DASHBOARD (RF03 e RF13) =====================
 
-### Sem token - esperado 401
-GET http://localhost:3000/trilhas
+### Dashboard do aluno - esperado 200
+GET {{api}}/dashboard
+Authorization: Bearer {{loginAluno.response.body.token}}
 
-### Perfil (RF02) - esperado 200
-GET http://localhost:3000/perfil
-Authorization: Bearer {{loginTrilhas.response.body.token}}
+### ===================== EXCLUSAO DE CONTA (RF21) =====================
+# Cria uma conta descartavel, entra com ela e a exclui (envie na ordem).
+
+### Criar conta descartavel - esperado 201 (ou 409 se ja existir)
+POST {{api}}/cadastro
+Content-Type: application/json
+
+{
+  "nome": "Conta Descartavel",
+  "email": "descartavel@teste.com",
+  "senha": "123456",
+  "aceitouTermos": true
+}
+
+### Login da conta descartavel
+# @name loginDescartavel
+POST {{api}}/login
+Content-Type: application/json
+
+{
+  "email": "descartavel@teste.com",
+  "senha": "123456"
+}
+
+### Excluir conta sem token - esperado 401
+DELETE {{api}}/minha-conta
+
+### Excluir a conta descartavel - esperado 200
+DELETE {{api}}/minha-conta
+Authorization: Bearer {{loginDescartavel.response.body.token}}

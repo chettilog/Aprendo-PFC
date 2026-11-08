@@ -179,7 +179,7 @@ app.post('/cadastro', async (req, res) => {
     res.status(500).json({ error: 'Erro ao cadastrar usuário', detalhes: err.message });
   }
 });
-        // Registra log de cadastro bem-sucedido
+        
 
 // Rota de login
 app.post('/login', async (req, res) => {
