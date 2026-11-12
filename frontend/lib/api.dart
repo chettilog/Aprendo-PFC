@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Endereço do back-end. Troque aqui quando o servidor for hospedado.
-const String apiBase = 'http://localhost:3000';
+const String apiBase = String.fromEnvironment('API_BASE', defaultValue: 'http://localhost:3000');
 
 // Erro devolvido pela API, com a mensagem que o servidor enviou
 class ApiErro implements Exception {
