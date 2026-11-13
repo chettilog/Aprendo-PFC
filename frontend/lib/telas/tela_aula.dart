@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'api.dart';
+import '../api.dart';
+import '../tema.dart';
 import 'tela_trilhas.dart';
-import 'tema.dart';
 
-// Mesmos limites do back-end (PRODUCAO_MIN e PRODUCAO_MAX no server.js)
+// Mesmos limites do back-end (PRODUCAO_MIN e PRODUCAO_MAX em backend/src/utils/validacoes.js)
 const _producaoMin = 40;
 const _producaoMax = 3000;
 
@@ -182,10 +182,17 @@ class _TelaAulaState extends State<TelaAula> {
           FilledButton(
             onPressed: _enviando ? null : _enviar,
             child: _enviando
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 3),
+                ? const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 3),
+                      ),
+                      SizedBox(width: 12),
+                      Text('Corrigindo sua explicação...'),
+                    ],
                   )
                 : const Text('Enviar explicação'),
           ),
@@ -197,9 +204,24 @@ class _TelaAulaState extends State<TelaAula> {
   Widget _feedback() {
     final feedback = _resultado!['feedback'];
     final xp = _resultado!['xp'];
-    final suficiente = feedback['resultado'] == 'suficiente';
-    final cor = suficiente ? CoresAprendo.turquesa : CoresAprendo.ouro;
-    final ganho = xp['ganho'] as int;
+    final resultado = feedback['resultado'] as String;
+    final suficiente = resultado == 'suficiente';
+    final parcial = resultado == 'parcial';
+    final cor = suficiente
+        ? CoresAprendo.turquesa
+        : parcial
+            ? CoresAprendo.ouro
+            : CoresAprendo.erro;
+    final titulo = suficiente
+        ? 'Mandou bem!'
+        : parcial
+            ? 'Quase lá!'
+            : 'Vamos tentar de novo';
+    final ganho = (xp['ganho'] ?? 0) as int;
+    final nota = feedback['nota'];
+    final criterios = feedback['criterios'];
+    final xpAula = xp['aula'];
+    final maximoAula = xp['maximo_aula'];
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -213,36 +235,91 @@ class _TelaAulaState extends State<TelaAula> {
         children: [
           Row(
             children: [
-              Icon(suficiente ? Icons.check_circle : Icons.lightbulb, color: cor, size: 32),
+              Icon(
+                suficiente
+                    ? Icons.check_circle
+                    : parcial
+                        ? Icons.lightbulb
+                        : Icons.refresh,
+                color: cor,
+                size: 32,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  suficiente ? 'Mandou bem!' : 'Quase lá!',
+                  titulo,
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: cor),
                 ),
               ),
+              if (nota != null)
+                Text(
+                  '$nota/100',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: cor),
+                ),
             ],
           ),
           const SizedBox(height: 12),
           Text('${feedback['comentario'] ?? ''}', style: const TextStyle(fontSize: 16)),
-          if (suficiente) ...[
-            const SizedBox(height: 16),
-            Text(
-              ganho > 0
-                  ? '+$ganho XP  ·  Nível ${xp['nivel']}'
-                  : 'Você já tinha ganhado o XP desta aula  ·  Nível ${xp['nivel']}',
-              style: const TextStyle(
+          // Notas de cada critério da rubrica (aparecem quando a IA corrigiu)
+          if (criterios is Map) ...[
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _Selo(texto: 'Conceito ${criterios['conceito']}/50', cor: cor, icone: Icons.school),
+                _Selo(texto: 'Completude ${criterios['completude']}/30', cor: cor, icone: Icons.checklist),
+                _Selo(texto: 'Clareza ${criterios['clareza']}/20', cor: cor, icone: Icons.forum),
+              ],
+            ),
+          ],
+          const SizedBox(height: 16),
+          Text(
+            ganho > 0
+                ? '+$ganho XP  ·  Nível ${xp['nivel']}'
+                : (xpAula != null && xpAula == maximoAula)
+                    ? 'Você já ganhou todo o XP desta aula  ·  Nível ${xp['nivel']}'
+                    : 'Nenhum XP desta vez  ·  Nível ${xp['nivel']}',
+            style: const TextStyle(
+              color: CoresAprendo.ouro,
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
+          if (xpAula != null && maximoAula != null) ...[
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: (xpAula as int) / (maximoAula as int),
+                minHeight: 8,
                 color: CoresAprendo.ouro,
-                fontWeight: FontWeight.w800,
-                fontSize: 16,
+                backgroundColor: CoresAprendo.superficieClara,
               ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'XP desta aula: $xpAula de $maximoAula',
+              style: const TextStyle(color: CoresAprendo.textoSuave, fontSize: 13),
             ),
           ],
           const SizedBox(height: 20),
-          FilledButton(
-            onPressed: suficiente ? () => Navigator.pop(context) : _tentarDeNovo,
-            child: Text(suficiente ? 'Continuar' : 'Revisar e enviar de novo'),
-          ),
+          if (suficiente)
+            FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Continuar'),
+            )
+          else ...[
+            FilledButton(
+              onPressed: _tentarDeNovo,
+              child: Text(parcial ? 'Completar a explicação' : 'Revisar e enviar de novo'),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Voltar para a trilha'),
+            ),
+          ],
         ],
       ),
     );

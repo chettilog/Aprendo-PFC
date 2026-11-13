@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'api.dart';
-import 'main.dart';
-import 'tema.dart';
+import '../api.dart';
+import '../tema.dart';
 import 'tela_aula.dart';
+import 'tela_login.dart';
 
 // ============================================================
 // ESTADO DE ERRO (reutilizado pelas telas novas)

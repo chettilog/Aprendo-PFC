@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'api.dart';
+import '../api.dart';
+import '../tema.dart';
 import 'tela_trilhas.dart';
-import 'tema.dart';
 
 // ============================================================
 // DASHBOARD DO ALUNO (RF03 e RF13): números grandes e gráficos

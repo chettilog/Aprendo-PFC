@@ -34,3 +34,9 @@ String? validarSenhaLogin(String? valor) {
   if ((valor ?? '').isEmpty) return 'Informe a sua senha';
   return null;
 }
+// No cadastro, a confirmação precisa ser igual à senha digitada
+String? validarConfirmacaoSenha(String senha, String? confirmacao) {
+  if ((confirmacao ?? '').isEmpty) return 'Confirme a sua senha';
+  if (confirmacao != senha) return 'As senhas não são iguais';
+  return null;
+}

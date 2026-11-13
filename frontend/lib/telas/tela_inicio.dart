@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'main.dart';
+import 'tela_perfil.dart';
 import 'tela_trilhas.dart';
 import 'tela_painel.dart';
 
