@@ -12,6 +12,9 @@ O Aprendo utiliza mecânicas de gamificação para engajar estudantes, com foco 
 - **Backend:** Node.js + Express
 - **Banco de dados:** PostgreSQL
 - **Segurança:** JWT (autenticação) + bcrypt (criptografia de senhas)
+- **Correção das explicações:** Google Gemini (IA) com rubrica, com reserva por palavras-chave
+- **Testes:** Jest + Supertest (backend) e flutter_test (frontend)
+- **Hospedagem:** Neon (banco), Render (backend) e Netlify (site)
 
 ## Funcionalidades implementadas
 
@@ -27,11 +30,18 @@ O Aprendo utiliza mecânicas de gamificação para engajar estudantes, com foco 
 
 **Verificação por produção**
 - Ao final de cada aula, o aluno escreve uma explicação com as próprias palavras (mínimo de 40 caracteres)
-- A explicação é avaliada pelas palavras-chave da aula e recebe um feedback: suficiente ou insuficiente, com dicas do que faltou
-- Uma explicação insuficiente pode ser refeita
+- A explicação recebe uma **nota de 0 a 100**, em 3 etapas:
+  1. **Filtro local**: texto sem sentido (letras aleatórias), lista de palavras soltas ou cópia do texto da aula recebe nota 0, sem chamar a IA
+  2. **IA com rubrica**: conceito correto (até 50) + completude em relação à resposta de referência (até 30) + clareza com palavras próprias (até 20)
+  3. **Reserva**: se a IA estiver fora do ar ou sem chave configurada, a nota vem da proporção de palavras-chave da aula citadas
+- Resultado: nota ≥ 70 é **suficiente**, de 40 a 69 é **parcial**, abaixo de 40 é **insuficiente**, sempre com um comentário do que faltou
+- A explicação pode ser refeita para melhorar a nota
 
 **Gamificação**
-- 50 XP na primeira explicação suficiente de cada aula (a mesma aula não pontua duas vezes)
+- Cada aula vale até 50 XP: suficiente = 50 XP, parcial = 25 XP, insuficiente = 0
+- Quem tirou parcial e depois acerta ganha só a diferença (+25); a mesma aula nunca passa de 50 XP
+- Uma trava no banco (advisory lock) impede ganhar XP duplicado com envios simultâneos
+- A aula só conta como concluída (e libera a próxima) com resultado suficiente
 - Nível calculado pelo XP total (um novo nível a cada 100 XP)
 
 **Dashboard**
@@ -57,23 +67,54 @@ O Aprendo utiliza mecânicas de gamificação para engajar estudantes, com foco 
 ```
 aprendo/
 ├── backend/
-│   ├── documentos/        # Termos de Uso e Política de Privacidade
-│   ├── sql/               # Scripts das tabelas e dados de exemplo
-│   ├── db.js              # Conexão com o PostgreSQL
-│   ├── server.js          # Rotas da API
-│   └── testes.http        # Testes das rotas (extensão REST Client)
+│   ├── server.js              # Ponto de entrada: só liga o servidor
+│   ├── src/
+│   │   ├── app.js             # Monta o Express e registra todas as rotas
+│   │   ├── config/
+│   │   │   └── banco.js       # Conexão com o PostgreSQL
+│   │   ├── middlewares/
+│   │   │   └── autenticacao.js  # verificarToken (JWT) e exigirPerfil (admin)
+│   │   ├── rotas/             # Um arquivo por parte do sistema
+│   │   │   ├── autenticacao.js  # POST /cadastro, POST /login
+│   │   │   ├── usuarios.js      # GET /perfil, DELETE /minha-conta
+│   │   │   ├── trilhas.js       # trilhas e aulas
+│   │   │   ├── producoes.js     # envio da explicação, nota e XP
+│   │   │   ├── dashboard.js     # GET /dashboard
+│   │   │   ├── admin.js         # GET /logs
+│   │   │   ├── documentos.js    # termos e política
+│   │   │   ├── wiki.js          # consulta à Wikipedia
+│   │   │   └── status.js        # GET / e GET /test-db
+│   │   ├── servicos/          # Regras de negócio (sem rotas)
+│   │   │   ├── avaliacao.js     # filtro, nota e resultado da explicação
+│   │   │   ├── ia.js            # chamada ao Gemini com a rubrica
+│   │   │   ├── xp.js            # XP por resultado, XP a ganhar e nível
+│   │   │   └── logs.js          # registro de auditoria
+│   │   └── utils/
+│   │       └── validacoes.js  # validação do cadastro, ids e explicação
+│   ├── testes/                # Testes automáticos (Jest)
+│   ├── documentos/            # Termos de Uso e Política de Privacidade
+│   ├── sql/                   # Scripts das tabelas e dados de exemplo
+│   └── testes.http            # Testes manuais das rotas (REST Client)
 ├── frontend/
 │   ├── lib/
-│   │   ├── main.dart          # Login, cadastro, perfil e documentos legais
-│   │   ├── tela_inicio.dart   # Navegação principal (Início, Trilhas, Perfil)
-│   │   ├── tela_painel.dart   # Dashboard
-│   │   ├── tela_trilhas.dart  # Trilhas e caminho de aulas
-│   │   ├── tela_aula.dart     # Aula, explicação e feedback
+│   │   ├── main.dart          # Ponto de entrada do app
 │   │   ├── api.dart           # Endereço do backend e chamadas à API
 │   │   ├── tema.dart          # Cores e tema visual
-│   │   └── validacoes.dart    # Regras de validação dos formulários
-│   └── test/              # Testes do Flutter
-├── docs/                  # Diagrama de classes e BPMN
+│   │   ├── validacoes.dart    # Regras de validação dos formulários
+│   │   ├── componentes/
+│   │   │   └── campo_senha.dart # Campo de senha com botão de mostrar/ocultar
+│   │   └── telas/
+│   │       ├── tela_login.dart
+│   │       ├── tela_cadastro.dart
+│   │       ├── tela_inicio.dart     # Navegação (Início, Trilhas, Perfil)
+│   │       ├── tela_painel.dart     # Dashboard
+│   │       ├── tela_trilhas.dart    # Trilhas e caminho de aulas
+│   │       ├── tela_aula.dart       # Aula, explicação e feedback
+│   │       ├── tela_perfil.dart
+│   │       ├── tela_documentos.dart # Termos e Política
+│   │       └── tela_busca_wiki.dart
+│   └── test/                  # Testes do Flutter
+├── docs/                      # Diagrama de classes e BPMN
 ├── INTEGRACAO_API.md
 └── README.md
 ```
@@ -112,7 +153,7 @@ aprendo/
 ```bash
 git clone https://github.com/chettilog/Aprendo-PFC.git aprendo
 cd aprendo
-git checkout entrega0911
+git checkout entrega1611
 ```
 
 ### 2. Configurar o banco de dados
@@ -123,41 +164,21 @@ Acesse o PostgreSQL:
 psql -U postgres
 ```
 
-Crie o banco e as tabelas de usuários e logs:
+Crie o banco:
 
 ```sql
 CREATE DATABASE aprendo_db;
-\c aprendo_db
-
-CREATE TABLE usuarios (
-  id SERIAL PRIMARY KEY,
-  nome VARCHAR(100) NOT NULL,
-  email VARCHAR(100) UNIQUE NOT NULL,
-  senha VARCHAR(255) NOT NULL,
-  criado_em TIMESTAMP DEFAULT NOW(),
-  termos_aceitos_em TIMESTAMP,
-  termos_versao VARCHAR(10),
-  perfil VARCHAR(20) NOT NULL DEFAULT 'aluno'
-);
-
-CREATE TABLE logs (
-  id SERIAL PRIMARY KEY,
-  usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
-  acao VARCHAR(50) NOT NULL,
-  detalhes VARCHAR(255),
-  ip VARCHAR(45),
-  sucesso BOOLEAN DEFAULT true,
-  criado_em TIMESTAMP DEFAULT NOW()
-);
 ```
 
-Saia com `\q`. Depois, na pasta `backend`, rode os scripts das demais tabelas e dos dados de exemplo, nesta ordem:
+Saia com `\q`. Depois, na pasta `backend`, rode os scripts nesta ordem:
 
 ```bash
 cd backend
+psql -U postgres -d aprendo_db -f sql/00-tabelas-base.sql
 psql -U postgres -d aprendo_db -f sql/01-tabelas-conteudo.sql
 psql -U postgres -d aprendo_db -f sql/02-dados-exemplo.sql
 psql -U postgres -d aprendo_db -f sql/03-palavras-chave.sql
+psql -U postgres -d aprendo_db -f sql/04-avaliacao-por-nota.sql
 ```
 
 Os scripts podem ser executados mais de uma vez sem duplicar dados.
@@ -182,12 +203,15 @@ DB_USER=postgres
 DB_PASSWORD=sua_senha_do_postgres
 DB_NAME=aprendo_db
 JWT_SECRET=defina_uma_chave_secreta_longa
+GEMINI_API_KEY=sua_chave_do_google_ai_studio
 ```
+
+A `GEMINI_API_KEY` é gratuita (https://aistudio.google.com/apikey). Sem ela, o sistema funciona normalmente e corrige pelas palavras-chave. O modelo pode ser trocado com `GEMINI_MODELO` (padrão: `gemini-flash-latest`).
 
 Inicie o servidor:
 
 ```bash
-node server.js
+npm start
 ```
 
 Backend disponível em `http://localhost:3000`.
@@ -218,7 +242,8 @@ UPDATE usuarios SET perfil = 'admin' WHERE email = 'email_da_conta@exemplo.com';
 
 ## Testes
 
-- **API:** abra `backend/testes.http` no VS Code com a extensão REST Client. Envie primeiro o login de cada seção; os demais testes usam o token automaticamente.
+- **Testes automáticos do backend:** na pasta `backend`, rode `npm test` (ou `npm run cobertura` para ver a porcentagem de código coberta; o relatório fica em `backend/coverage/index.html`). Os testes não precisam de banco nem de internet: o banco e a IA são simulados.
+- **API manual:** abra `backend/testes.http` no VS Code com a extensão REST Client. Envie primeiro o login de cada seção; os demais testes usam o token automaticamente.
 - **Frontend:** na pasta `frontend`, rode `flutter test`.
 
 ## Contas de teste (ambiente local)

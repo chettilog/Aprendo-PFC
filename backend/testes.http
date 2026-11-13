@@ -177,7 +177,43 @@ Content-Type: application/json
   "conteudo": "Nao lembro direito o que foi explicado nessa aula, mas achei interessante."
 }
 
-### Producao suficiente - esperado 201, feedback suficiente (XP 50 so na primeira vez)
+### Palavras-chave + letras aleatorias (o "truque") - esperado 201, nota 0, avaliador "filtro"
+POST {{api}}/aulas/1/producoes
+Authorization: Bearer {{loginAluno.response.body.token}}
+Content-Type: application/json
+
+{
+  "conteudo": "função domínio contradomínio entrada saída asdkjasd qweqwe zxczxc fdgdfg"
+}
+
+### So a lista de palavras-chave - esperado 201, nota 0, avaliador "filtro"
+POST {{api}}/aulas/1/producoes
+Authorization: Bearer {{loginAluno.response.body.token}}
+Content-Type: application/json
+
+{
+  "conteudo": "função domínio contradomínio entrada saída função domínio contradomínio"
+}
+
+### Copia do texto da aula - esperado 201, nota 0, avaliador "filtro"
+POST {{api}}/aulas/1/producoes
+Authorization: Bearer {{loginAluno.response.body.token}}
+Content-Type: application/json
+
+{
+  "conteudo": "Uma função relaciona cada valor de um conjunto (domínio) a exatamente um valor de outro conjunto (contradomínio)."
+}
+
+### Producao parcial - esperado 201, resultado "parcial" e 25 XP (com a IA ligada)
+POST {{api}}/aulas/1/producoes
+Authorization: Bearer {{loginAluno.response.body.token}}
+Content-Type: application/json
+
+{
+  "conteudo": "Função é quando a gente coloca um número e sai outro número, tipo uma conta que sempre dá o mesmo resultado."
+}
+
+### Producao suficiente - esperado 201, feedback suficiente (completa ate 50 XP na aula, so a diferenca)
 POST {{api}}/aulas/1/producoes
 Authorization: Bearer {{loginAluno.response.body.token}}
 Content-Type: application/json
