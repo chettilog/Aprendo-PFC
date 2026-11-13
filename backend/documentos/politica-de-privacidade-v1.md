@@ -1,7 +1,7 @@
 # Política de Privacidade — Aprendo
 
-**Versão 1.0**
-**Data de publicação: 27 de setembro de 2026**
+**Versão 1.1**
+**Data de publicação: 16 de novembro de 2026** (versão 1.0: 27 de setembro de 2026)
 
 ## 1. Quem somos
 
@@ -24,6 +24,7 @@ Nesta Política, explicamos de um jeito simples quais dados coletamos, por que c
 - Data e hora do acesso
 - O que foi feito no sistema (login, cadastro, acesso ao perfil, exclusão de conta, consultas educacionais)
 - Se a ação deu certo ou não
+- As explicações (produções) que você escreve nas aulas, a nota e o comentário que elas receberam e o XP ganho
 
 ### 2.3 Em tentativas de login
 
@@ -41,6 +42,7 @@ Cada dado tem um motivo específico:
 - **E-mail**: permitir que você entre na sua conta e diferenciar sua conta das outras
 - **Senha**: proteger o acesso à sua conta
 - **Data e versão do aceite**: comprovar que você aceitou os Termos e esta Política
+- **Produções, notas e XP**: corrigir suas explicações, mostrar seu progresso e liberar as próximas aulas
 - **Registros de acesso e ações**: manter a plataforma segura, identificar tentativas de fraude e cumprir o Marco Civil da Internet (Lei nº 12.965/2014)
 
 ## 4. Com base em que usamos seus dados (LGPD, Art. 7º)
@@ -65,6 +67,12 @@ Usamos a Wikipedia para consultas educacionais que complementam as aulas. Quem f
 
 Para desenhar a interface do Aprendo no navegador, usamos uma tecnologia chamada CanvasKit, que é baixada dos servidores do Google. Nesse carregamento, o seu navegador se conecta diretamente ao Google, que recebe dados técnicos da conexão, como o seu endereço IP. Nenhum outro dado da sua conta é enviado. Os servidores do Google podem ficar fora do Brasil.
 
+### 5.3 Google (Gemini) — correção das explicações
+
+Para dar uma nota justa à sua explicação, o texto que você escreve na aula é enviado à inteligência artificial Gemini, do Google, junto com o conteúdo da aula. **Só o texto da explicação é enviado**: seu nome, e-mail, identificador da conta e endereço IP não vão junto, porque quem faz o envio são os servidores do Aprendo. Por isso, **não escreva dados pessoais (seus ou de outras pessoas) nas explicações**.
+
+Antes do envio, o próprio Aprendo confere o texto e não manda à IA textos sem sentido ou copiados da aula. Se a IA estiver fora do ar, a correção é feita pelo próprio Aprendo, com base nas palavras-chave da aula. Os servidores do Google podem ficar fora do Brasil.
+
 ## 6. Como protegemos seus dados
 
 Usamos medidas técnicas e organizacionais para proteger seus dados:
@@ -74,7 +82,7 @@ Usamos medidas técnicas e organizacionais para proteger seus dados:
 - Verificação de permissão em todas as áreas que acessam dados protegidos
 - Registro de acessos e ações importantes para auditoria
 - Chaves de segurança guardadas fora do código da plataforma
-- Em produção, toda a comunicação será feita com HTTPS (conexão segura)
+- Toda a comunicação entre o aplicativo e os servidores é feita com HTTPS (conexão segura)
 
 Se acontecer algum incidente de segurança que possa trazer risco ou dano a você, avisaremos você e a Autoridade Nacional de Proteção de Dados (ANPD), como exige a LGPD (Art. 48).
 
@@ -102,7 +110,7 @@ Você pode excluir sua conta quando quiser, pelo botão **"Excluir minha conta"*
 
 ### 8.2 O que acontece quando você exclui
 
-- Seu nome, e-mail, senha e dados do aceite são apagados do nosso banco de dados na hora
+- Seu nome, e-mail, senha, dados do aceite, produções, notas e XP são apagados do nosso banco de dados na hora
 - Os registros de acesso (logs) continuam guardados, mas **desvinculados da sua conta**, porque o Marco Civil da Internet exige que eles sejam mantidos
 
 ### 8.3 Por quanto tempo guardamos
@@ -129,7 +137,12 @@ A verificação de idade e a autorização dos responsáveis no cadastro estão 
 
 ## 10. Onde os dados ficam guardados
 
-A previsão é que, em produção, a plataforma fique hospedada em um provedor de nuvem com servidores no Brasil. A exceção é o carregamento do CanvasKit, explicado na seção 5.2.
+- **Banco de dados** (contas, produções, XP e registros de acesso): provedor Neon, com servidores em São Paulo, no Brasil
+- **Servidor da aplicação** (que recebe os pedidos do aplicativo e acessa o banco): provedor Render, com servidores nos Estados Unidos
+- **Site do aplicativo**: provedor Netlify, que entrega os arquivos do site a partir de servidores em vários países
+- **Correção das explicações**: Google Gemini (seção 5.3)
+
+Quando os dados passam por servidores fora do Brasil, isso é uma transferência internacional de dados (LGPD, Art. 33). Escolhemos provedores que adotam medidas de segurança reconhecidas internacionalmente e usamos conexão segura (HTTPS) em todo o caminho.
 
 ## 11. Mudanças nesta Política
 
@@ -152,4 +165,4 @@ Respondemos em até 15 dias corridos.
 ---
 
 *Aprendo Tecnologia Educacional Ltda.*
-*Versão 1.0*
+*Versão 1.1*

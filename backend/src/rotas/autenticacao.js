@@ -8,8 +8,8 @@ const { validarCadastro } = require('../utils/validacoes');
 
 const router = express.Router();
 
-// Versão atual dos documentos aceitos (atualizar quando os termos mudarem)
-const VERSAO_TERMOS = '1.0';
+// Versão atual dos documentos aceitos (Termos 1.0 + Política 1.1; atualizar quando mudarem)
+const VERSAO_TERMOS = '1.1';
 
 // Cadastro de usuário
 router.post('/cadastro', async (req, res) => {
