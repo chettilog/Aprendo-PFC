@@ -104,7 +104,14 @@ async function avaliarComIA(texto, aula) {
   });
 
   if (!resposta.ok) {
-    throw new Error(`Gemini respondeu ${resposta.status}`);
+    // Guarda o começo da mensagem de erro do Google para aparecer no log (não contém a chave)
+    let detalhe = '';
+    try {
+      detalhe = (await resposta.text()).replace(/\s+/g, ' ').slice(0, 300);
+    } catch {
+      detalhe = '';
+    }
+    throw new Error(`Gemini respondeu ${resposta.status} ${detalhe}`.trim());
   }
 
   const dados = await resposta.json();
