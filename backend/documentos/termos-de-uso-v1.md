@@ -1,7 +1,7 @@
 # Termos de Uso — Aprendo
 
-**Versão 1.0**
-**Data de publicação: 27 de setembro de 2026**
+**Versão 1.1**
+**Data de publicação: 16 de novembro de 2026** (versão 1.0: 27 de setembro de 2026)
 
 ## 1. Aceitação dos termos
 
@@ -13,7 +13,9 @@ Ao criar sua conta, você concorda com estes Termos e com a nossa Política de P
 
 O Aprendo é uma plataforma gamificada de aprendizagem para estudantes do ensino médio. Aqui, não basta acertar um quiz de múltipla escolha: você mostra que aprendeu **produzindo seu próprio conteúdo**, como resumos, explicações e teach-back (explicar a matéria com as suas palavras, como se estivesse ensinando alguém). Chamamos isso de **verificação por produção**.
 
-Algumas funcionalidades ainda estão em desenvolvimento e serão liberadas em versões futuras, como a produção de conteúdo, as trilhas completas de aulas e a gamificação com XP e conquistas.
+Hoje a plataforma oferece trilhas de aulas, a explicação escrita ao final de cada aula, a correção dessa explicação com nota e comentário, e a gamificação com XP e níveis. Outras funcionalidades, como conquistas e produção em áudio, estão em planejamento para versões futuras.
+
+A correção das explicações é automática e usa inteligência artificial. A nota serve para orientar o seu estudo dentro da plataforma e não substitui a avaliação de um professor.
 
 ## 3. Idade mínima e uso por menores de idade
 
@@ -26,7 +28,7 @@ Se você tem menos de 18 anos:
 
 Não fazemos publicidade direcionada para nenhum usuário.
 
-A verificação de idade e a autorização dos responsáveis no cadastro estão em desenvolvimento.
+No cadastro, você precisa declarar que tem 12 anos ou mais. Não pedimos a sua data de nascimento, para não guardar um dado além do necessário. A conferência da idade por documento e a autorização formal dos responsáveis estão em planejamento.
 
 ## 4. Cadastro e conta
 
@@ -35,6 +37,7 @@ A verificação de idade e a autorização dos responsáveis no cadastro estão 
 - Nome
 - E-mail válido
 - Senha
+- Declarar que tem 12 anos ou mais
 - Aceitar estes Termos de Uso e a Política de Privacidade
 
 ### 4.2 Suas responsabilidades
@@ -80,9 +83,13 @@ Seus resumos, explicações e outras produções na plataforma continuam sendo s
 
 Ao produzir conteúdo no Aprendo, você nos autoriza, de forma gratuita e não exclusiva, a guardar, exibir e analisar esse conteúdo **apenas para fins pedagógicos dentro da plataforma**, como verificar seu aprendizado e dar feedback.
 
+Para dar a nota, o texto da sua explicação é enviado a um serviço de inteligência artificial, sem o seu nome, e-mail ou qualquer identificação. Os detalhes estão na Política de Privacidade.
+
 ### 7.3 Sua responsabilidade
 
 Você é responsável pelo que produz e se compromete a não publicar nada que desrespeite a lei ou os direitos de outras pessoas.
+
+Não escreva dados pessoais nas explicações, nem seus nem de outras pessoas (nome completo, endereço, telefone, documentos, informações de saúde e semelhantes).
 
 ## 8. Suspensão e encerramento da conta
 
@@ -148,4 +155,4 @@ Respondemos em até 15 dias corridos.
 ---
 
 *Aprendo Tecnologia Educacional Ltda.*
-*Versão 1.0*
+*Versão 1.1*

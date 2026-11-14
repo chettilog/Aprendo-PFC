@@ -63,8 +63,14 @@ O Aprendo utiliza mecânicas de gamificação para engajar estudantes, com foco 
 
 **LGPD**
 - Aceite obrigatório dos Termos de Uso e da Política de Privacidade no cadastro, com registro da versão e da data do aceite
+- Declaração obrigatória de idade mínima (12 anos) no cadastro, sem coletar a data de nascimento (minimização de dados)
 - Documentos acessíveis a qualquer momento (no cadastro e na tela de perfil)
-- Exclusão de conta pelo próprio titular, com confirmação; as explicações e o XP do usuário são removidos, e os logs são preservados de forma anonimizada
+- Nenhum dado pessoal sensível é coletado; a tela da aula avisa para não escrever dados pessoais na explicação
+- O texto enviado à IA para correção vai sem nome, e-mail ou identificador do aluno
+- Logs sem e-mail por extenso: quando necessário, o e-mail é gravado mascarado (`j***@email.com`)
+- Logs apagados automaticamente depois de 6 meses (prazo do Marco Civil da Internet)
+- O token de login guarda apenas o id do usuário
+- Exclusão de conta pelo próprio titular, com confirmação; as explicações e o XP são removidos, e os logs que restam deixam de identificar a pessoa
 
 **Integração com API externa**
 - Consulta à Wikipedia via proxy no backend (o IP do usuário não é exposto ao serviço externo)
@@ -97,7 +103,7 @@ aprendo/
 │   │   │   ├── ia.js            # chamada ao Gemini com a rubrica
 │   │   │   ├── xp.js            # XP por resultado, XP a ganhar e nível
 │   │   │   ├── progresso.js     # dias seguidos de estudo e próxima aula
-│   │   │   └── logs.js          # registro de auditoria
+│   │   │   └── logs.js          # auditoria, máscara de e-mail e limpeza dos logs antigos
 │   │   └── utils/
 │   │       └── validacoes.js  # validação do cadastro, ids e explicação
 │   ├── testes/                # Testes automáticos (Jest)
@@ -132,7 +138,7 @@ aprendo/
 
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
-| POST | `/cadastro` | Público | Cria conta (valida os campos e exige aceite dos termos) |
+| POST | `/cadastro` | Público | Cria conta (valida os campos e exige aceite dos termos e declaração de idade mínima) |
 | POST | `/login` | Público | Autentica e retorna token JWT |
 | GET | `/termos` | Público | Termos de Uso |
 | GET | `/politica` | Público | Política de Privacidade |
@@ -190,6 +196,7 @@ psql -U postgres -d aprendo_db -f sql/03-palavras-chave.sql
 psql -U postgres -d aprendo_db -f sql/04-avaliacao-por-nota.sql
 psql -U postgres -d aprendo_db -f sql/05-novas-trilhas.sql
 psql -U postgres -d aprendo_db -f sql/06-aulas-detalhadas.sql
+psql -U postgres -d aprendo_db -f sql/07-lgpd-logs.sql
 ```
 
 O conteúdo das aulas (título, texto, palavras-chave e resposta de referência) é cadastrado por esses scripts, direto na tabela `aulas`. Não há tela de cadastro de aulas no app.

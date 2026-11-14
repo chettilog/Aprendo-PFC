@@ -24,6 +24,7 @@ class _TelaCadastroState extends State<TelaCadastro> {
   final _confirmacaoController = TextEditingController();
   bool _carregando = false;
   bool _aceitouTermos = false;
+  bool _idadeMinima = false; // declaração de que tem 12 anos ou mais (LGPD, Art. 14)
   String _mensagem = '';
 
   Future<void> _cadastrar() async {
@@ -49,6 +50,7 @@ class _TelaCadastroState extends State<TelaCadastro> {
           'email': _emailController.text,
           'senha': _senhaController.text,
           'aceitouTermos': _aceitouTermos,
+          'idadeMinima': _idadeMinima,
         }),
       );
 
@@ -132,6 +134,23 @@ class _TelaCadastroState extends State<TelaCadastro> {
                       validarConfirmacaoSenha(_senhaController.text, valor),
                 ),
                 const SizedBox(height: 24),
+                // Declaração de idade mínima (obrigatória - LGPD, Art. 14).
+                // Só a declaração é guardada, sem data de nascimento (minimização de dados).
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _idadeMinima,
+                      onChanged: (valor) {
+                        setState(() {
+                          _idadeMinima = valor ?? false;
+                        });
+                      },
+                    ),
+                    const Expanded(
+                      child: Text('Tenho 12 anos ou mais', style: TextStyle(fontSize: 13)),
+                    ),
+                  ],
+                ),
                 // Checkbox de aceite dos Termos e Política (obrigatório - LGPD)
                 Row(
                   children: [
@@ -187,11 +206,23 @@ class _TelaCadastroState extends State<TelaCadastro> {
                     ),
                   ],
                 ),
+                const Padding(
+                  padding: EdgeInsets.only(left: 12, top: 4),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Se você tem menos de 18 anos, leia os termos junto com um responsável.',
+                      style: TextStyle(fontSize: 12, color: CoresAprendo.textoSuave),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: (_carregando || !_aceitouTermos) ? null : _cadastrar,
+                    onPressed: (_carregando || !_aceitouTermos || !_idadeMinima)
+                        ? null
+                        : _cadastrar,
                     child: _carregando
                         ? const CircularProgressIndicator()
                         : const Text('Cadastrar'),

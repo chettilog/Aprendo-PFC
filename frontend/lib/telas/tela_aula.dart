@@ -172,6 +172,9 @@ class _TelaAulaState extends State<TelaAula> {
             decoration: const InputDecoration(
               hintText: 'Escreva aqui a sua explicação...',
               border: OutlineInputBorder(),
+              // Aviso de privacidade (LGPD): o texto é livre, então pedimos que não tenha dados pessoais
+              helperText: 'Não escreva dados pessoais, nem seus nem de outras pessoas.',
+              helperMaxLines: 2,
             ),
           ),
           if (_erroEnvio != null) ...[

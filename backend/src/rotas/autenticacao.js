@@ -3,18 +3,18 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/banco');
-const { registrarLog } = require('../servicos/logs');
+const { registrarLog, mascararEmail } = require('../servicos/logs');
 const { validarCadastro } = require('../utils/validacoes');
 
 const router = express.Router();
 
-// Versão atual dos documentos aceitos (Termos 1.0 + Política 1.1; atualizar quando mudarem)
-const VERSAO_TERMOS = '1.1';
+// Versão atual dos documentos aceitos (Termos 1.1 + Política 1.2; atualizar quando mudarem)
+const VERSAO_TERMOS = '1.2';
 
 // Cadastro de usuário
 router.post('/cadastro', async (req, res) => {
   try {
-    const { senha, aceitouTermos } = req.body || {};
+    const { senha, aceitouTermos, idadeMinima } = req.body || {};
     const nome = typeof req.body?.nome === 'string' ? req.body.nome.trim() : '';
     const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
 
@@ -27,6 +27,14 @@ router.post('/cadastro', async (req, res) => {
     if (!aceitouTermos) {
       return res.status(400).json({
         error: 'É necessário aceitar os Termos de Uso e a Política de Privacidade'
+      });
+    }
+
+    // Validação LGPD (Art. 14): a idade mínima da plataforma é 12 anos.
+    // Guardamos só a declaração, não a data de nascimento (minimização de dados).
+    if (idadeMinima !== true) {
+      return res.status(400).json({
+        error: 'É necessário declarar que você tem 12 anos ou mais'
       });
     }
 
@@ -43,7 +51,7 @@ router.post('/cadastro', async (req, res) => {
     await registrarLog(
       result.rows[0].id,
       'cadastro',
-      `Novo usuário: ${email} (termos v${VERSAO_TERMOS})`,
+      `Novo usuário (termos v${VERSAO_TERMOS}, declarou ter 12 anos ou mais)`,
       req.ip,
       true
     );
@@ -58,7 +66,7 @@ router.post('/cadastro', async (req, res) => {
       await registrarLog(
         null,
         'cadastro_falha',
-        `Email já cadastrado: ${req.body.email}`,
+        `E-mail já cadastrado: ${mascararEmail(req.body.email)}`,
         req.ip,
         false
       );
@@ -84,7 +92,8 @@ router.post('/login', async (req, res) => {
 
     if (result.rows.length === 0) {
       // Registra tentativa de login com e-mail inexistente
-      await registrarLog(null, 'login_falha', `Email não cadastrado: ${email}`, req.ip, false);
+      // O e-mail digitado é gravado mascarado (ex.: j***@email.com), nunca por extenso
+      await registrarLog(null, 'login_falha', `E-mail não cadastrado: ${mascararEmail(email)}`, req.ip, false);
       // Mensagem genérica: não revela se o e-mail existe
       return res.status(401).json({ error: 'E-mail ou senha inválidos' });
     }
@@ -97,8 +106,9 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'E-mail ou senha inválidos' });
     }
 
+    // O token leva só o id do usuário: nenhum dado pessoal fica guardado no navegador
     const token = jwt.sign(
-      { id: usuario.id, email: usuario.email },
+      { id: usuario.id },
       process.env.JWT_SECRET,
       { expiresIn: '2h' }
     );

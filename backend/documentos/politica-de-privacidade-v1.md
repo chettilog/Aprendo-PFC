@@ -1,6 +1,6 @@
 # Política de Privacidade — Aprendo
 
-**Versão 1.1**
+**Versão 1.2**
 **Data de publicação: 16 de novembro de 2026** (versão 1.0: 27 de setembro de 2026)
 
 ## 1. Quem somos
@@ -17,6 +17,7 @@ Nesta Política, explicamos de um jeito simples quais dados coletamos, por que c
 - E-mail
 - Senha (guardada com hash criptográfico, de um jeito que nem a nossa equipe consegue ler)
 - Data e versão dos Termos de Uso e desta Política que você aceitou
+- A sua declaração de que tem 12 anos ou mais (não pedimos a data de nascimento)
 
 ### 2.2 Enquanto você usa a plataforma
 
@@ -28,11 +29,13 @@ Nesta Política, explicamos de um jeito simples quais dados coletamos, por que c
 
 ### 2.3 Em tentativas de login
 
-Se alguém tentar entrar com um e-mail que não está cadastrado, o e-mail digitado fica registrado nos nossos registros de segurança. Isso nos ajuda a perceber tentativas suspeitas de acesso e não cria nenhuma conta.
+Se alguém tentar entrar com um e-mail que não está cadastrado, o e-mail digitado fica nos nossos registros de segurança **de forma mascarada** (por exemplo, `j***@email.com`), nunca por extenso. Isso nos ajuda a perceber tentativas suspeitas de acesso e não cria nenhuma conta.
 
 ### 2.4 O que não coletamos
 
 Não coletamos sua localização precisa, dados biométricos, informações financeiras nem dados de outras pessoas.
+
+Também **não coletamos dados pessoais sensíveis**, que são os que a LGPD protege de forma especial (Art. 5º, II): origem racial ou étnica, religião, opinião política, saúde, vida sexual, dados genéticos ou biométricos. O único lugar onde um dado desse tipo poderia aparecer é o texto livre das suas explicações. Por isso pedimos, na própria tela da aula, que você **não escreva dados pessoais** ali.
 
 ## 3. Para que usamos seus dados
 
@@ -78,7 +81,8 @@ Antes do envio, o próprio Aprendo confere o texto e não manda à IA textos sem
 Usamos medidas técnicas e organizacionais para proteger seus dados:
 
 - Senhas guardadas com hash criptográfico, que ninguém consegue ler
-- Login com tokens de sessão que expiram de tempos em tempos
+- Login com tokens de sessão que expiram de tempos em tempos e que guardam apenas um número interno da conta, sem nome nem e-mail
+- Registros de acesso (logs) sem o seu e-mail por extenso
 - Verificação de permissão em todas as áreas que acessam dados protegidos
 - Registro de acessos e ações importantes para auditoria
 - Chaves de segurança guardadas fora do código da plataforma
@@ -111,18 +115,15 @@ Você pode excluir sua conta quando quiser, pelo botão **"Excluir minha conta"*
 ### 8.2 O que acontece quando você exclui
 
 - Seu nome, e-mail, senha, dados do aceite, produções, notas e XP são apagados do nosso banco de dados na hora
-- Os registros de acesso (logs) continuam guardados, mas **desvinculados da sua conta**, porque o Marco Civil da Internet exige que eles sejam mantidos
+- Os registros de acesso (logs) continuam guardados pelo prazo legal, mas **desvinculados da sua conta**: eles deixam de apontar para você, e o seu e-mail é mascarado em qualquer registro antigo onde ainda aparecesse
 
 ### 8.3 Por quanto tempo guardamos
 
 - **Dados da conta**: enquanto sua conta existir
-- **Registros de acesso (logs)**: pelo menos 6 meses, como exige o Marco Civil da Internet
+- **Registros de acesso (logs)**: 6 meses, prazo do Marco Civil da Internet. Depois disso, uma rotina automática da plataforma apaga esses registros todos os dias
 - **Depois que você exclui a conta**: dados pessoais apagados na hora; registros de acesso guardados pelo prazo legal, sem ligação com a sua conta
 
-Estão em planejamento rotinas automáticas para:
-
-- Apagar os registros de acesso depois de 6 meses
-- Anonimizar contas sem acesso há mais de 2 anos
+Está em planejamento uma rotina automática para anonimizar contas sem acesso há mais de 2 anos.
 
 ## 9. Menores de idade
 
@@ -133,7 +134,7 @@ A maioria de quem usa o Aprendo é estudante do ensino médio, então muitos usu
 - Nenhum dado de menores é usado para publicidade
 - Pais ou responsáveis podem exercer os direitos do titular em nome do menor pelo e-mail **privacidade@aprendo.com.br**
 
-A verificação de idade e a autorização dos responsáveis no cadastro estão em desenvolvimento, previstas para uma versão futura da plataforma.
+No cadastro, pedimos apenas que você declare ter 12 anos ou mais. Escolhemos não pedir a data de nascimento para não guardar um dado além do necessário (princípio da necessidade, Art. 6º, III). A conferência da idade por documento e a autorização formal dos responsáveis estão em planejamento.
 
 ## 10. Onde os dados ficam guardados
 
@@ -165,4 +166,4 @@ Respondemos em até 15 dias corridos.
 ---
 
 *Aprendo Tecnologia Educacional Ltda.*
-*Versão 1.1*
+*Versão 1.2*

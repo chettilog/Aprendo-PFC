@@ -59,6 +59,32 @@ void main() {
     expect(find.text('As senhas não são iguais'), findsOneWidget);
   });
 
+  testWidgets('O cadastro só libera o botão com idade mínima e termos marcados',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: TelaCadastro()));
+
+    bool botaoLiberado() =>
+        tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Cadastrar')).onPressed != null;
+
+    expect(find.text('Tenho 12 anos ou mais'), findsOneWidget);
+    expect(find.byType(Checkbox), findsNWidgets(2));
+    expect(botaoLiberado(), isFalse);
+
+    // Marca só a idade: ainda bloqueado
+    await tester.ensureVisible(find.byType(Checkbox).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(Checkbox).first);
+    await tester.pump();
+    expect(botaoLiberado(), isFalse);
+
+    // Marca também os termos: liberado
+    await tester.ensureVisible(find.byType(Checkbox).last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(Checkbox).last);
+    await tester.pump();
+    expect(botaoLiberado(), isTrue);
+  });
+
   test('Cada matéria tem o seu ícone', () {
     expect(iconeDaMateria('Matemática'), Icons.calculate_rounded);
     expect(iconeDaMateria('História'), Icons.account_balance_rounded);

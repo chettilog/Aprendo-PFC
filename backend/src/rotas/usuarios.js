@@ -2,7 +2,7 @@
 const express = require('express');
 const pool = require('../config/banco');
 const { verificarToken } = require('../middlewares/autenticacao');
-const { registrarLog } = require('../servicos/logs');
+const { registrarLog, removerEmailDosLogs } = require('../servicos/logs');
 
 const router = express.Router();
 
@@ -31,7 +31,7 @@ router.delete('/minha-conta', verificarToken, async (req, res) => {
   try {
     const usuarioId = req.usuario.id;
 
-    // Busca o e-mail antes de apagar, para usar no log
+    // Busca o e-mail antes de apagar, para poder tirá-lo dos logs antigos
     const busca = await pool.query('SELECT email FROM usuarios WHERE id = $1', [usuarioId]);
 
     if (busca.rows.length === 0) {
@@ -44,10 +44,14 @@ router.delete('/minha-conta', verificarToken, async (req, res) => {
     // os logs ficam para auditoria, mas com usuario_id = NULL (ON DELETE SET NULL)
     await pool.query('DELETE FROM usuarios WHERE id = $1', [usuarioId]);
 
+    // Os logs que sobram não podem mais identificar a pessoa:
+    // o e-mail é mascarado nos registros antigos e não entra no registro da exclusão
+    await removerEmailDosLogs(emailUsuario);
+
     await registrarLog(
       null,
       'exclusao_conta',
-      `Conta excluída pelo próprio titular: ${emailUsuario}`,
+      'Conta excluída pelo próprio titular',
       req.ip,
       true
     );

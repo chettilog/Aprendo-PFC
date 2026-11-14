@@ -47,25 +47,36 @@ describe('cadastro (RF01)', () => {
     expect(r.status).toBe(400);
     expect(r.body.error).toMatch(/Termos/);
   });
+  test('exige a declaração de idade mínima (LGPD, Art. 14)', async () => {
+    const r = await request(app).post('/cadastro')
+      .send({ nome: 'Ana', email: 'a@a.com', senha: '123456', aceitouTermos: true });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toMatch(/12 anos/);
+  });
   test('valida os campos', async () => {
-    const r = await request(app).post('/cadastro').send({ nome: 'A', email: 'a@a.com', senha: '123456', aceitouTermos: true });
+    const r = await request(app).post('/cadastro').send({ nome: 'A', email: 'a@a.com', senha: '123456', aceitouTermos: true, idadeMinima: true });
     expect(r.status).toBe(400);
   });
   test('cria a conta e guarda a senha com hash', async () => {
     banco([['INSERT INTO usuarios', { rows: [{ id: 1, nome: 'Ana', email: 'a@a.com' }] }]]);
     const r = await request(app).post('/cadastro')
-      .send({ nome: ' Ana ', email: 'a@a.com', senha: '123456', aceitouTermos: true });
+      .send({ nome: ' Ana ', email: 'a@a.com', senha: '123456', aceitouTermos: true, idadeMinima: true });
     expect(r.status).toBe(201);
     const params = pool.query.mock.calls.find(c => c[0].includes('INSERT INTO usuarios'))[1];
     expect(params[0]).toBe('Ana');
     expect(params[2]).not.toBe('123456');
     expect(await bcrypt.compare('123456', params[2])).toBe(true);
+    // o log do cadastro não guarda o e-mail
+    const log = pool.query.mock.calls.find(c => c[0].includes('INSERT INTO logs'))[1];
+    expect(log[2]).not.toContain('a@a.com');
   });
   test('e-mail repetido devolve 409', async () => {
     banco([['INSERT INTO usuarios', Object.assign(new Error('dup'), { code: '23505' })]]);
     const r = await request(app).post('/cadastro')
-      .send({ nome: 'Ana', email: 'a@a.com', senha: '123456', aceitouTermos: true });
+      .send({ nome: 'Ana', email: 'a@a.com', senha: '123456', aceitouTermos: true, idadeMinima: true });
     expect(r.status).toBe(409);
+    const log = pool.query.mock.calls.find(c => c[0].includes('INSERT INTO logs'))[1];
+    expect(log[2]).toContain('a***@a.com');
   });
 });
 
@@ -83,12 +94,21 @@ describe('login (RF02)', () => {
     expect(r2.status).toBe(401);
     expect(r1.body.error).toBe(r2.body.error);
   });
+  test('tentativa com e-mail desconhecido grava o e-mail mascarado no log', async () => {
+    banco([['FROM usuarios WHERE email', { rows: [] }]]);
+    await request(app).post('/login').send({ email: 'joao.silva@email.com', senha: '123456' });
+    const log = pool.query.mock.calls.find(c => c[0].includes('INSERT INTO logs'))[1];
+    expect(log[2]).toContain('j***@email.com');
+    expect(log[2]).not.toContain('joao.silva');
+  });
   test('login certo devolve um token JWT', async () => {
     const hash = await bcrypt.hash('123456', 4);
     banco([['FROM usuarios WHERE email', { rows: [{ id: 1, nome: 'Ana', email: 'a@a.com', senha: hash }] }]]);
     const r = await request(app).post('/login').send({ email: 'a@a.com', senha: '123456' });
     expect(r.status).toBe(200);
-    expect(jwt.verify(r.body.token, process.env.JWT_SECRET).id).toBe(1);
+    const conteudoDoToken = jwt.verify(r.body.token, process.env.JWT_SECRET);
+    expect(conteudoDoToken.id).toBe(1);
+    expect(conteudoDoToken).not.toHaveProperty('email'); // nenhum dado pessoal no token
   });
 });
 
@@ -120,6 +140,11 @@ describe('token e perfil de acesso', () => {
     const r = await request(app).delete('/minha-conta').set(auth);
     expect(r.status).toBe(200);
     expect(pool.query.mock.calls.some(c => c[0].startsWith('DELETE FROM usuarios'))).toBe(true);
+    // o e-mail é mascarado nos logs antigos e não aparece no log da exclusão
+    const limpeza = pool.query.mock.calls.find(c => c[0].includes('UPDATE logs'));
+    expect(limpeza[1]).toEqual(['a@a.com', 'a***@a.com']);
+    const logs = pool.query.mock.calls.filter(c => c[0].includes('INSERT INTO logs'));
+    expect(logs.every(c => !String(c[1][2]).includes('a@a.com'))).toBe(true);
   });
 });
 

@@ -29,7 +29,8 @@ Content-Type: application/json
   "nome": "A",
   "email": "valido@teste.com",
   "senha": "123456",
-  "aceitouTermos": true
+  "aceitouTermos": true,
+  "idadeMinima": true
 }
 
 ### E-mail invalido - esperado 400
@@ -40,7 +41,8 @@ Content-Type: application/json
   "nome": "Teste",
   "email": "email-invalido",
   "senha": "123456",
-  "aceitouTermos": true
+  "aceitouTermos": true,
+  "idadeMinima": true
 }
 
 ### Senha curta - esperado 400
@@ -51,7 +53,8 @@ Content-Type: application/json
   "nome": "Teste",
   "email": "valido@teste.com",
   "senha": "123",
-  "aceitouTermos": true
+  "aceitouTermos": true,
+  "idadeMinima": true
 }
 
 ### E-mail ja cadastrado - esperado 409
@@ -62,7 +65,8 @@ Content-Type: application/json
   "nome": "Teste Com Termos",
   "email": "comtermos@teste.com",
   "senha": "123456",
-  "aceitouTermos": true
+  "aceitouTermos": true,
+  "idadeMinima": true
 }
 
 ### ===================== LOGIN (RF02) E PERFIS (RF18) =====================
@@ -243,7 +247,8 @@ Content-Type: application/json
   "nome": "Conta Descartavel",
   "email": "descartavel@teste.com",
   "senha": "123456",
-  "aceitouTermos": true
+  "aceitouTermos": true,
+  "idadeMinima": true
 }
 
 ### Login da conta descartavel

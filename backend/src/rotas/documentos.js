@@ -16,11 +16,11 @@ function enviarDocumento(res, arquivo, versao, mensagemErro) {
 }
 
 router.get('/termos', (req, res) => {
-  enviarDocumento(res, 'termos-de-uso-v1.md', '1.0', 'Erro ao carregar Termos de Uso');
+  enviarDocumento(res, 'termos-de-uso-v1.md', '1.1', 'Erro ao carregar Termos de Uso');
 });
 
 router.get('/politica', (req, res) => {
-  enviarDocumento(res, 'politica-de-privacidade-v1.md', '1.1', 'Erro ao carregar Política de Privacidade');
+  enviarDocumento(res, 'politica-de-privacidade-v1.md', '1.2', 'Erro ao carregar Política de Privacidade');
 });
 
 module.exports = router;
