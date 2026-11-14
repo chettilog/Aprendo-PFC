@@ -33,7 +33,8 @@ O Aprendo utiliza mecânicas de gamificação para engajar estudantes, com foco 
 - A explicação recebe uma **nota de 0 a 100**, em 3 etapas:
   1. **Filtro local**: texto sem sentido (letras aleatórias), lista de palavras soltas ou cópia do texto da aula recebe nota 0, sem chamar a IA
   2. **IA com rubrica**: conceito correto (até 50) + completude em relação à resposta de referência (até 30) + clareza com palavras próprias (até 20)
-  3. **Reserva**: se a IA estiver fora do ar ou sem chave configurada, a nota vem da proporção de palavras-chave da aula citadas
+     - Se a IA estiver sobrecarregada ou demorar, o sistema tenta até 3 vezes (modelo principal, modelo de reserva, principal de novo), esperando 1 s e depois 2 s
+  3. **Reserva**: se todas as tentativas falharem ou não houver chave configurada, a nota vem da proporção de palavras-chave da aula citadas
 - Resultado: nota ≥ 70 é **suficiente**, de 40 a 69 é **parcial**, abaixo de 40 é **insuficiente**, sempre com um comentário do que faltou
 - A explicação pode ser refeita para melhorar a nota
 
@@ -206,7 +207,7 @@ JWT_SECRET=defina_uma_chave_secreta_longa
 GEMINI_API_KEY=sua_chave_do_google_ai_studio
 ```
 
-A `GEMINI_API_KEY` é gratuita (https://aistudio.google.com/apikey). Sem ela, o sistema funciona normalmente e corrige pelas palavras-chave. O modelo pode ser trocado com `GEMINI_MODELO` (padrão: `gemini-flash-latest`).
+A `GEMINI_API_KEY` é gratuita (https://aistudio.google.com/apikey). Sem ela, o sistema funciona normalmente e corrige pelas palavras-chave. O modelo pode ser trocado com `GEMINI_MODELO` (padrão: `gemini-flash-latest`) e o de reserva com `GEMINI_MODELO_RESERVA` (padrão: `gemini-flash-lite-latest`).
 
 Inicie o servidor:
 

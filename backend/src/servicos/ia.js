@@ -3,7 +3,9 @@
 // é enviado (minimização de dados - LGPD).
 
 const URL_GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models';
-const TEMPO_LIMITE_MS = 15000;
+const TEMPO_LIMITE_MS = 10000;          // tempo máximo de cada tentativa
+const PAUSAS_MS = [1000, 2000];         // espera antes da 2ª e da 3ª tentativa (vai dobrando)
+const ERROS_SEM_NOVA_TENTATIVA = [400, 401, 403]; // pedido ou chave errados: tentar de novo não resolve
 
 // Rubrica: a soma dos critérios dá a nota de 0 a 100
 const RUBRICA = {
@@ -76,15 +78,22 @@ ${texto}
 <<<FIM>>>`;
 }
 
-// Chama o Gemini e devolve { nota, criterios, comentario }.
-// Lança erro se a chave não existir, a API falhar ou demorar demais;
-// quem chama decide o que fazer (no Aprendo: usa a avaliação por regras).
-async function avaliarComIA(texto, aula) {
-  if (!iaConfigurada()) {
-    throw new Error('GEMINI_API_KEY não configurada');
-  }
-  const modelo = process.env.GEMINI_MODELO || 'gemini-flash-latest';
+// Modelos usados, em ordem: o principal e um mais leve de reserva.
+// Quando o Google responde "modelo sobrecarregado" (erro 503), o de reserva costuma estar livre.
+function modelos() {
+  return [
+    process.env.GEMINI_MODELO || 'gemini-flash-latest',
+    process.env.GEMINI_MODELO_RESERVA || 'gemini-flash-lite-latest',
+  ];
+}
 
+// Nos testes automáticos não esperamos de verdade
+function pausar(ms) {
+  return new Promise(resolve => setTimeout(resolve, process.env.NODE_ENV === 'test' ? 0 : ms));
+}
+
+// Uma tentativa: chama um modelo do Gemini e devolve { nota, criterios, comentario }
+async function chamarGemini(modelo, texto, aula) {
   const resposta = await fetch(`${URL_GEMINI}/${modelo}:generateContent`, {
     method: 'POST',
     headers: {
@@ -111,15 +120,46 @@ async function avaliarComIA(texto, aula) {
     } catch {
       detalhe = '';
     }
-    throw new Error(`Gemini respondeu ${resposta.status} ${detalhe}`.trim());
+    const erro = new Error(`Gemini (${modelo}) respondeu ${resposta.status} ${detalhe}`.trim());
+    erro.status = resposta.status;
+    throw erro;
   }
 
   const dados = await resposta.json();
   const textoIA = dados?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!textoIA) {
-    throw new Error('Gemini não devolveu conteúdo');
+    throw new Error(`Gemini (${modelo}) não devolveu conteúdo`);
   }
   return interpretarResposta(JSON.parse(textoIA));
 }
 
-module.exports = { RUBRICA, iaConfigurada, interpretarResposta, montarPrompt, avaliarComIA };
+// Avalia com a IA, com até 3 tentativas: modelo principal -> reserva -> principal.
+// Entre as tentativas espera 1s e depois 2s (a espera dobra: "backoff exponencial").
+// Lança erro se a chave não existir ou se todas as tentativas falharem;
+// quem chama decide o que fazer (no Aprendo: usa a avaliação por regras).
+async function avaliarComIA(texto, aula) {
+  if (!iaConfigurada()) {
+    throw new Error('GEMINI_API_KEY não configurada');
+  }
+  const [principal, reserva] = modelos();
+  const tentativas = [principal, reserva, principal];
+
+  let ultimoErro;
+  for (let i = 0; i < tentativas.length; i++) {
+    try {
+      return await chamarGemini(tentativas[i], texto, aula);
+    } catch (err) {
+      ultimoErro = err;
+      if (ERROS_SEM_NOVA_TENTATIVA.includes(err.status)) break;
+      if (i < tentativas.length - 1) {
+        console.warn(`Tentativa ${i + 1} da IA falhou (${err.message}). Tentando de novo...`);
+        await pausar(PAUSAS_MS[i]);
+      }
+    }
+  }
+  throw ultimoErro;
+}
+
+module.exports = {
+  RUBRICA, iaConfigurada, interpretarResposta, montarPrompt, modelos, chamarGemini, avaliarComIA,
+};

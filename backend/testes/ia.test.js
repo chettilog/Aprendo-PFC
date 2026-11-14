@@ -53,14 +53,47 @@ test('chama o Gemini e devolve a nota', async () => {
   expect(opcoes.body).not.toMatch(/email|usuario_id/);
 });
 
-test('erro HTTP do Gemini vira exceção', async () => {
+test('erro 429 em todas as tentativas vira exceção (3 tentativas)', async () => {
   process.env.GEMINI_API_KEY = 'chave-teste';
-  jest.spyOn(global, 'fetch').mockResolvedValue(respostaGemini({}, 429));
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
+  const fetchFalso = jest.spyOn(global, 'fetch').mockResolvedValue(respostaGemini({}, 429));
   await expect(avaliarComIA('texto', aula)).rejects.toThrow('429');
+  expect(fetchFalso).toHaveBeenCalledTimes(3);
+});
+
+test('modelo sobrecarregado (503): tenta de novo no modelo de reserva', async () => {
+  process.env.GEMINI_API_KEY = 'chave-teste';
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
+  const fetchFalso = jest.spyOn(global, 'fetch')
+    .mockResolvedValueOnce(respostaGemini({}, 503))
+    .mockResolvedValueOnce(respostaGemini({ conceito: 40, completude: 20, clareza: 15, comentario: 'Bom' }));
+  const r = await avaliarComIA('texto', aula);
+  expect(r.nota).toBe(75);
+  expect(fetchFalso).toHaveBeenCalledTimes(2);
+  expect(fetchFalso.mock.calls[0][0]).toContain('gemini-flash-latest');
+  expect(fetchFalso.mock.calls[1][0]).toContain('gemini-flash-lite-latest');
+});
+
+test('demora demais (timeout): também tenta de novo', async () => {
+  process.env.GEMINI_API_KEY = 'chave-teste';
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
+  const fetchFalso = jest.spyOn(global, 'fetch')
+    .mockRejectedValueOnce(new Error('The operation was aborted due to timeout'))
+    .mockResolvedValueOnce(respostaGemini({ conceito: 50, completude: 30, clareza: 20, comentario: 'Ótimo' }));
+  expect((await avaliarComIA('texto', aula)).nota).toBe(100);
+  expect(fetchFalso).toHaveBeenCalledTimes(2);
+});
+
+test('chave inválida (401): não adianta tentar de novo', async () => {
+  process.env.GEMINI_API_KEY = 'chave-errada';
+  const fetchFalso = jest.spyOn(global, 'fetch').mockResolvedValue(respostaGemini({}, 401));
+  await expect(avaliarComIA('texto', aula)).rejects.toThrow('401');
+  expect(fetchFalso).toHaveBeenCalledTimes(1);
 });
 
 test('resposta sem conteúdo vira exceção', async () => {
   process.env.GEMINI_API_KEY = 'chave-teste';
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
   jest.spyOn(global, 'fetch').mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
   await expect(avaliarComIA('texto', aula)).rejects.toThrow('conteúdo');
 });
