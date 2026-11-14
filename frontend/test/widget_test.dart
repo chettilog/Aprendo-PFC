@@ -15,16 +15,33 @@ void main() {
     expect(find.widgetWithText(FilledButton, 'Entrar'), findsOneWidget);
   });
 
-  testWidgets('O olhinho mostra e esconde a senha no login', (WidgetTester tester) async {
+  testWidgets('No login a senha fica escondida e não tem olhinho', (WidgetTester tester) async {
     await tester.pumpWidget(const AprendoApp());
 
-    TextField campoSenha() =>
-        tester.widget<TextField>(find.widgetWithText(TextField, 'Senha'));
+    final campoSenha = tester.widget<TextField>(find.widgetWithText(TextField, 'Senha'));
+    expect(campoSenha.obscureText, isTrue);
+    expect(find.byIcon(Icons.visibility_outlined), findsNothing);
+    expect(find.byIcon(Icons.visibility_off_outlined), findsNothing);
+  });
 
-    expect(campoSenha().obscureText, isTrue);
-    await tester.tap(find.byIcon(Icons.visibility_outlined));
+  testWidgets('No cadastro o olhinho mostra e esconde a senha', (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: TelaCadastro()));
+
+    bool escondida(String rotulo) =>
+        tester.widget<TextField>(find.widgetWithText(TextField, rotulo)).obscureText;
+
+    expect(escondida('Senha'), isTrue);
+    expect(escondida('Confirme sua senha'), isTrue);
+
+    // Clica no olhinho do primeiro campo (Senha)
+    final olhinho = find.byIcon(Icons.visibility_outlined).first;
+    await tester.ensureVisible(olhinho);
+    await tester.pumpAndSettle();
+    await tester.tap(olhinho);
     await tester.pump();
-    expect(campoSenha().obscureText, isFalse);
+
+    expect(escondida('Senha'), isFalse);
+    expect(escondida('Confirme sua senha'), isTrue); // o outro campo continua escondido
   });
 
   testWidgets('O cadastro pede a confirmação da senha', (WidgetTester tester) async {

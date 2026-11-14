@@ -112,6 +112,7 @@ class _TelaLoginState extends State<TelaLogin> {
                   controller: _senhaController,
                   rotulo: 'Senha',
                   validator: validarSenhaLogin,
+                  comOlhinho: false, // no login a senha nunca é mostrada
                   aoEnviar: (_) {
                     if (!_carregando) _fazerLogin();
                   },
