@@ -189,7 +189,10 @@ psql -U postgres -d aprendo_db -f sql/02-dados-exemplo.sql
 psql -U postgres -d aprendo_db -f sql/03-palavras-chave.sql
 psql -U postgres -d aprendo_db -f sql/04-avaliacao-por-nota.sql
 psql -U postgres -d aprendo_db -f sql/05-novas-trilhas.sql
+psql -U postgres -d aprendo_db -f sql/06-aulas-detalhadas.sql
 ```
+
+O conteúdo das aulas (título, texto, palavras-chave e resposta de referência) é cadastrado por esses scripts, direto na tabela `aulas`. Não há tela de cadastro de aulas no app.
 
 Os scripts podem ser executados mais de uma vez sem duplicar dados.
 
