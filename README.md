@@ -25,8 +25,11 @@ O Aprendo utiliza mecânicas de gamificação para engajar estudantes, com foco 
 - Logout com remoção do token
 
 **Trilhas e aulas**
+- Três trilhas de exemplo: Matemática (Fundamentos de Funções), História (Revolução Industrial) e Geografia (Clima e Tempo), com 3 aulas cada
 - Lista de trilhas por matéria, com o progresso do aluno em cada uma
 - Aulas em formato de caminho: concluídas, aula atual e aulas bloqueadas até a anterior ser concluída
+- Cada aula do caminho mostra a melhor nota do aluno; a aula com acerto parcial fica marcada como "falta completar"
+- Ao abrir uma trilha, a tela rola sozinha até a aula atual
 
 **Verificação por produção**
 - Ao final de cada aula, o aluno escreve uma explicação com as próprias palavras (mínimo de 40 caracteres)
@@ -46,8 +49,12 @@ O Aprendo utiliza mecânicas de gamificação para engajar estudantes, com foco 
 - Nível calculado pelo XP total (um novo nível a cada 100 XP)
 
 **Dashboard**
-- Nível, XP total, aulas concluídas e explicações enviadas em destaque
+- Botão "Continuar de onde parei", que abre a próxima aula não concluída
+- Nível, com quanto XP falta para o próximo
+- Dias seguidos de estudo, XP total, aulas concluídas e nota média em destaque
+- Últimas 3 explicações, com a nota de cada uma
 - Gráfico do XP ganho nos últimos 7 dias e progresso por trilha
+- Datas calculadas no horário de Brasília
 
 **Auditoria**
 - Registro de ações na tabela `logs`: cadastro, login (sucesso e falha), acesso ao perfil, exclusão de conta, consultas externas e acessos negados
@@ -89,6 +96,7 @@ aprendo/
 │   │   │   ├── avaliacao.js     # filtro, nota e resultado da explicação
 │   │   │   ├── ia.js            # chamada ao Gemini com a rubrica
 │   │   │   ├── xp.js            # XP por resultado, XP a ganhar e nível
+│   │   │   ├── progresso.js     # dias seguidos de estudo e próxima aula
 │   │   │   └── logs.js          # registro de auditoria
 │   │   └── utils/
 │   │       └── validacoes.js  # validação do cadastro, ids e explicação
@@ -133,7 +141,7 @@ aprendo/
 | GET | `/logs` | JWT + admin | Logs de auditoria |
 | GET | `/wiki/:topico` | JWT | Consulta à Wikipedia |
 | GET | `/trilhas` | JWT | Lista as trilhas ativas |
-| GET | `/trilhas/:id/aulas` | JWT | Aulas da trilha, indicando as concluídas pelo aluno |
+| GET | `/trilhas/:id/aulas` | JWT | Aulas da trilha, com a situação (concluída, parcial) e a melhor nota do aluno |
 | GET | `/aulas/:id` | JWT | Conteúdo de uma aula |
 | POST | `/aulas/:id/producoes` | JWT | Envia a explicação do aluno, retorna o feedback e o XP |
 | GET | `/aulas/:id/producoes` | JWT | Explicações do aluno na aula, com o feedback |
@@ -180,6 +188,7 @@ psql -U postgres -d aprendo_db -f sql/01-tabelas-conteudo.sql
 psql -U postgres -d aprendo_db -f sql/02-dados-exemplo.sql
 psql -U postgres -d aprendo_db -f sql/03-palavras-chave.sql
 psql -U postgres -d aprendo_db -f sql/04-avaliacao-por-nota.sql
+psql -U postgres -d aprendo_db -f sql/05-novas-trilhas.sql
 ```
 
 Os scripts podem ser executados mais de uma vez sem duplicar dados.

@@ -56,6 +56,14 @@ class EstadoErro extends StatelessWidget {
   }
 }
 
+// Ícone de cada matéria (usado no cartão da trilha)
+IconData iconeDaMateria(dynamic materia) => switch (materia) {
+      'Matemática' => Icons.calculate_rounded,
+      'História' => Icons.account_balance_rounded,
+      'Geografia' => Icons.public_rounded,
+      _ => Icons.menu_book_rounded,
+    };
+
 // ============================================================
 // LISTA DE TRILHAS (RF04 e RF13)
 // ============================================================
@@ -79,12 +87,13 @@ class _TelaTrilhasState extends State<TelaTrilhas> {
   Future<List<Map<String, dynamic>>> _carregar() async {
     final respostas = await Future.wait([apiGet('/trilhas'), apiGet('/dashboard')]);
     final trilhas = List<Map<String, dynamic>>.from(respostas[0]['trilhas']);
-    final progresso = <int, int>{
-      for (final t in respostas[1]['dashboard']['trilhas'])
-        t['id'] as int: t['percentual'] as int,
+    final progresso = <int, dynamic>{
+      for (final t in respostas[1]['dashboard']['trilhas']) t['id'] as int: t,
     };
     for (final t in trilhas) {
-      t['percentual'] = progresso[t['id']] ?? 0;
+      final dadosDoAluno = progresso[t['id']];
+      t['percentual'] = dadosDoAluno == null ? 0 : dadosDoAluno['percentual'];
+      t['aulas_concluidas'] = dadosDoAluno == null ? 0 : dadosDoAluno['aulas_concluidas'];
     }
     return trilhas;
   }
@@ -164,13 +173,20 @@ class _CardTrilha extends StatelessWidget {
                   color: CoresAprendo.turquesa.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text(
-                  trilha['materia'],
-                  style: const TextStyle(
-                    color: CoresAprendo.turquesa,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(iconeDaMateria(trilha['materia']), size: 14, color: CoresAprendo.turquesa),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${trilha['materia']}',
+                      style: const TextStyle(
+                        color: CoresAprendo.turquesa,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 12),
@@ -205,7 +221,7 @@ class _CardTrilha extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                '${trilha['total_aulas']} aulas',
+                '${trilha['aulas_concluidas'] ?? 0} de ${trilha['total_aulas']} aulas concluídas',
                 style: const TextStyle(color: CoresAprendo.textoSuave, fontSize: 13),
               ),
             ],
@@ -231,11 +247,11 @@ class TelaTrilha extends StatefulWidget {
 
 enum _EstadoAula { concluida, atual, bloqueada }
 
+// Largura reservada para cada aula do caminho (bolinha + título embaixo)
+const _larguraNo = 150.0;
+
 class _TelaTrilhaState extends State<TelaTrilha> {
   late Future<List<Map<String, dynamic>>> _futuro;
-
-  // Posição horizontal de cada aula, formando um caminho em zigue-zague
-  static const _deslocamentos = [0.0, -0.5, -0.7, -0.5, 0.0, 0.5, 0.7, 0.5];
 
   @override
   void initState() {
@@ -250,7 +266,7 @@ class _TelaTrilhaState extends State<TelaTrilha> {
 
   void _recarregar() => setState(() => _futuro = _carregar());
 
-    // Abre a aula e, ao voltar, recarrega o caminho (a próxima aula pode ter sido liberada)
+  // Abre a aula e, ao voltar, recarrega o caminho (a próxima aula pode ter sido liberada)
   Future<void> _abrirAula(Map<String, dynamic> aula) async {
     await Navigator.push(
       context,
@@ -260,7 +276,7 @@ class _TelaTrilhaState extends State<TelaTrilha> {
     );
     if (mounted) _recarregar();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -274,33 +290,130 @@ class _TelaTrilhaState extends State<TelaTrilha> {
           if (snap.hasError) {
             return EstadoErro(erro: snap.error!, aoTentarDeNovo: _recarregar);
           }
-          final aulas = snap.data!;
-          // A aula atual é a primeira ainda não concluída; as seguintes ficam bloqueadas
-          final indiceAtual = aulas.indexWhere((a) => a['concluida'] != true);
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 500),
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-                itemCount: aulas.length,
-                itemBuilder: (context, indice) {
-                  final aula = aulas[indice];
-                  final estado = aula['concluida'] == true
-                      ? _EstadoAula.concluida
-                      : (indice == indiceAtual ? _EstadoAula.atual : _EstadoAula.bloqueada);
-                  return Align(
-                    alignment: Alignment(_deslocamentos[indice % _deslocamentos.length], 0),
-                    child: _NoAula(
-                      aula: aula,
-                      estado: estado,
-                      aoTocar: estado == _EstadoAula.bloqueada ? null : () => _abrirAula(aula),
-                    ),
-                  );
-                },
+          return _CaminhoAulas(aulas: snap.data!, aoAbrir: _abrirAula);
+        },
+      ),
+    );
+  }
+}
+
+// O caminho em zigue-zague: uma bolinha por aula, ligadas por pontinhos.
+// Ao abrir, a tela rola sozinha até a aula atual.
+class _CaminhoAulas extends StatefulWidget {
+  final List<Map<String, dynamic>> aulas;
+  final void Function(Map<String, dynamic> aula) aoAbrir;
+
+  const _CaminhoAulas({required this.aulas, required this.aoAbrir});
+
+  @override
+  State<_CaminhoAulas> createState() => _CaminhoAulasState();
+}
+
+class _CaminhoAulasState extends State<_CaminhoAulas> {
+  // Posição horizontal de cada aula (-1 = esquerda, 0 = centro, 1 = direita)
+  static const _deslocamentos = [0.0, -0.5, -0.7, -0.5, 0.0, 0.5, 0.7, 0.5];
+
+  // Marca a bolinha da aula atual, para a tela conseguir rolar até ela
+  final GlobalKey _chaveAulaAtual = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    // Espera a tela ser desenhada pela primeira vez e então rola até a aula atual
+    WidgetsBinding.instance.addPostFrameCallback((_) => _rolarAteAulaAtual());
+  }
+
+  void _rolarAteAulaAtual() {
+    final contexto = _chaveAulaAtual.currentContext;
+    if (contexto == null) return; // todas as aulas concluídas: não há aula atual
+    Scrollable.ensureVisible(
+      contexto,
+      alignment: 0.35,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOut,
+    );
+  }
+
+  double _posicao(int indice) => _deslocamentos[indice % _deslocamentos.length];
+
+  @override
+  Widget build(BuildContext context) {
+    final aulas = widget.aulas;
+    // A aula atual é a primeira ainda não concluída; as seguintes ficam bloqueadas
+    final indiceAtual = aulas.indexWhere((a) => a['concluida'] != true);
+
+    _EstadoAula estadoDe(int indice) {
+      if (aulas[indice]['concluida'] == true) return _EstadoAula.concluida;
+      return indice == indiceAtual ? _EstadoAula.atual : _EstadoAula.bloqueada;
+    }
+
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 500),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+          child: Column(
+            children: [
+              for (var i = 0; i < aulas.length; i++) ...[
+                if (i > 0)
+                  _Conector(
+                    de: _posicao(i - 1),
+                    ate: _posicao(i),
+                    liberado: aulas[i - 1]['concluida'] == true,
+                  ),
+                Align(
+                  alignment: Alignment(_posicao(i), 0),
+                  child: _NoAula(
+                    key: i == indiceAtual ? _chaveAulaAtual : null,
+                    aula: aulas[i],
+                    estado: estadoDe(i),
+                    aoTocar: estadoDe(i) == _EstadoAula.bloqueada
+                        ? null
+                        : () => widget.aoAbrir(aulas[i]),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Três pontinhos ligando uma aula à seguinte.
+// Ficam coloridos quando a aula anterior já foi concluída (caminho liberado).
+class _Conector extends StatelessWidget {
+  final double de;
+  final double ate;
+  final bool liberado;
+
+  const _Conector({required this.de, required this.ate, required this.liberado});
+
+  @override
+  Widget build(BuildContext context) {
+    final cor = liberado ? CoresAprendo.turquesa : CoresAprendo.superficieClara;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        children: [
+          for (final fracao in const [0.25, 0.5, 0.75])
+            Align(
+              alignment: Alignment(de + (ate - de) * fracao, 0),
+              child: SizedBox(
+                width: _larguraNo,
+                height: 16,
+                child: Center(
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(color: cor, shape: BoxShape.circle),
+                  ),
+                ),
               ),
             ),
-          );
-        },
+        ],
       ),
     );
   }
@@ -311,20 +424,26 @@ class _NoAula extends StatelessWidget {
   final _EstadoAula estado;
   final VoidCallback? aoTocar;
 
-  const _NoAula({required this.aula, required this.estado, required this.aoTocar});
+  const _NoAula({super.key, required this.aula, required this.estado, required this.aoTocar});
 
   @override
   Widget build(BuildContext context) {
+    // "parcial" = o aluno já acertou parte da explicação, mas ainda não concluiu a aula
+    final parcial = aula['parcial'] == true;
+    final nota = aula['melhor_nota'];
     final (cor, icone) = switch (estado) {
       _EstadoAula.concluida => (CoresAprendo.turquesa, Icons.check_rounded),
-      _EstadoAula.atual => (CoresAprendo.ouro, Icons.play_arrow_rounded),
+      _EstadoAula.atual => (
+          CoresAprendo.ouro,
+          parcial ? Icons.star_half_rounded : Icons.play_arrow_rounded,
+        ),
       _EstadoAula.bloqueada => (CoresAprendo.superficieClara, Icons.lock_rounded),
     };
     final bloqueada = estado == _EstadoAula.bloqueada;
     final tamanho = estado == _EstadoAula.atual ? 84.0 : 72.0;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 28),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -355,14 +474,27 @@ class _NoAula extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           SizedBox(
-            width: 150,
-            child: Text(
-              aula['titulo'],
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: bloqueada ? CoresAprendo.textoSuave : CoresAprendo.texto,
-              ),
+            width: _larguraNo,
+            child: Column(
+              children: [
+                Text(
+                  '${aula['titulo']}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: bloqueada ? CoresAprendo.textoSuave : CoresAprendo.texto,
+                  ),
+                ),
+                // Melhor nota que o aluno já tirou nesta aula
+                if (!bloqueada && nota != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    parcial ? 'Nota $nota · falta completar' : 'Nota $nota',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: cor),
+                  ),
+                ],
+              ],
             ),
           ),
         ],

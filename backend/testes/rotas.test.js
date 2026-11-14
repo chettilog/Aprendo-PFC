@@ -143,13 +143,21 @@ describe('trilhas e aulas (RF04 e RF05)', () => {
     banco([]);
     expect((await request(app).get('/trilhas/99/aulas').set(auth)).status).toBe(404);
   });
-  test('aulas com o campo concluida', async () => {
+  test('aulas com concluida, parcial e melhor nota', async () => {
     banco([
       ['FROM trilhas WHERE id', { rows: [{ id: 1 }] }],
-      ['FROM aulas a', { rows: [{ id: 1, concluida: true }, { id: 2, concluida: false }] }],
+      ['FROM aulas a', { rows: [
+        { id: 1, concluida: true, tem_parcial: true, melhor_nota: 90 },
+        { id: 2, concluida: false, tem_parcial: true, melhor_nota: 55 },
+        { id: 3, concluida: false, tem_parcial: false, melhor_nota: null },
+      ] }],
     ]);
     const r = await request(app).get('/trilhas/1/aulas').set(auth);
-    expect(r.body.aulas.map(a => a.concluida)).toEqual([true, false]);
+    expect(r.body.aulas.map(a => a.concluida)).toEqual([true, false, false]);
+    // só é "parcial" quem acertou parte e ainda não concluiu
+    expect(r.body.aulas.map(a => a.parcial)).toEqual([false, true, false]);
+    expect(r.body.aulas.map(a => a.melhor_nota)).toEqual([90, 55, null]);
+    expect(r.body.aulas[0]).not.toHaveProperty('tem_parcial');
   });
   test('conteúdo da aula', async () => {
     banco([['FROM aulas a', { rows: [{ id: 1, titulo: 'Funções' }] }]]);
@@ -229,15 +237,46 @@ describe('produção, avaliação e XP (RF06, RF07 e RF08)', () => {
 });
 
 describe('dashboard (RF13)', () => {
-  test('calcula nível e percentual por trilha', async () => {
+  test('calcula nível, percentual, dias seguidos e próxima aula', async () => {
     banco([
+      ['SELECT nome FROM usuarios', { rows: [{ nome: 'Ana' }] }],
       ['FROM movimentacoes_xp WHERE usuario_id = $1', { rows: [{ total: 150 }] }],
-      ['COUNT(*)::int AS total FROM producoes', { rows: [{ total: 4 }] }],
+      ['AS nota_media', { rows: [{ total: 4, nota_media: 72 }] }],
       ['FROM trilhas t', { rows: [{ id: 1, total_aulas: 4, aulas_concluidas: 1 }] }],
-      ['generate_series', { rows: [] }],
+      ['generate_series', { rows: [{ dia: '2026-11-14', xp: 50 }] }],
+      ['AS dia_estudado', { rows: [
+        { dia_estudado: '2026-11-14', hoje: '2026-11-14' },
+        { dia_estudado: '2026-11-13', hoje: '2026-11-14' },
+      ] }],
+      ['LIMIT 3', { rows: [{ aula_id: 1, aula_titulo: 'Funções', nota: 80, resultado: 'suficiente' }] }],
+      ['AS trilha_nome', { rows: [
+        { id: 1, titulo: 'Aula 1', trilha_id: 1, trilha_nome: 'Funções', concluida: true },
+        { id: 2, titulo: 'Aula 2', trilha_id: 1, trilha_nome: 'Funções', concluida: false },
+      ] }],
     ]);
     const r = await request(app).get('/dashboard').set(auth);
-    expect(r.body.dashboard).toMatchObject({ xp_total: 150, nivel: 2, xp_no_nivel: 50, aulas_concluidas: 1 });
+    expect(r.status).toBe(200);
+    expect(r.body.dashboard).toMatchObject({
+      nome: 'Ana', xp_total: 150, nivel: 2, xp_no_nivel: 50, xp_para_proximo_nivel: 50,
+      producoes_enviadas: 4, nota_media: 72, dias_seguidos: 2, aulas_concluidas: 1,
+    });
     expect(r.body.dashboard.trilhas[0].percentual).toBe(25);
+    expect(r.body.dashboard.ultimas_producoes).toHaveLength(1);
+    expect(r.body.dashboard.proxima_aula).toMatchObject({ id: 2, trilha_id: 1 });
+  });
+
+  test('aluno novo, sem nenhum dado, não quebra', async () => {
+    banco([]);
+    const r = await request(app).get('/dashboard').set(auth);
+    expect(r.status).toBe(200);
+    expect(r.body.dashboard).toMatchObject({
+      nome: null, xp_total: 0, nivel: 1, xp_para_proximo_nivel: 100,
+      producoes_enviadas: 0, nota_media: null, dias_seguidos: 0, proxima_aula: null,
+    });
+  });
+
+  test('erro no banco: 500', async () => {
+    banco([['SELECT nome FROM usuarios', new Error('sem conexão')]]);
+    expect((await request(app).get('/dashboard').set(auth)).status).toBe(500);
   });
 });

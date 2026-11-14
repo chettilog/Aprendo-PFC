@@ -25,7 +25,9 @@ router.get('/trilhas', verificarToken, async (req, res) => {
 
 // Lista as aulas de uma trilha ativa, na ordem definida (sem o conteúdo).
 // "concluida" = o aluno já tem uma produção suficiente nessa aula;
-// o app usa isso para liberar a próxima aula do caminho.
+//               o app usa isso para liberar a próxima aula do caminho.
+// "parcial" = ainda não concluiu, mas já acertou parte (ganhou metade do XP).
+// "melhor_nota" = maior nota (0 a 100) que o aluno já tirou na aula, ou null.
 router.get('/trilhas/:id/aulas', verificarToken, async (req, res) => {
   const { id } = req.params;
   if (!idValido(id)) {
@@ -48,13 +50,29 @@ router.get('/trilhas/:id/aulas', verificarToken, async (req, res) => {
                 JOIN feedbacks f ON f.producao_id = p.id
                 WHERE p.aula_id = a.id AND p.usuario_id = $2
                   AND f.resultado = 'suficiente'
-              ) AS concluida
+              ) AS concluida,
+              EXISTS (
+                SELECT 1 FROM producoes p
+                JOIN feedbacks f ON f.producao_id = p.id
+                WHERE p.aula_id = a.id AND p.usuario_id = $2
+                  AND f.resultado = 'parcial'
+              ) AS tem_parcial,
+              (
+                SELECT MAX(f.nota) FROM producoes p
+                JOIN feedbacks f ON f.producao_id = p.id
+                WHERE p.aula_id = a.id AND p.usuario_id = $2
+              )::int AS melhor_nota
        FROM aulas a
        WHERE a.trilha_id = $1
        ORDER BY a.ordem`,
       [id, req.usuario.id]
     );
-    res.json({ trilha: trilha.rows[0], aulas: aulas.rows });
+
+    const lista = aulas.rows.map(({ tem_parcial, ...aula }) => ({
+      ...aula,
+      parcial: !aula.concluida && Boolean(tem_parcial),
+    }));
+    res.json({ trilha: trilha.rows[0], aulas: lista });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao listar aulas', detalhes: err.message });
   }

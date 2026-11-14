@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aprendo_frontend/main.dart';
 import 'package:aprendo_frontend/telas/tela_cadastro.dart';
+import 'package:aprendo_frontend/telas/tela_trilhas.dart';
 import 'package:aprendo_frontend/validacoes.dart';
 
 void main() {
@@ -56,6 +57,13 @@ void main() {
     await tester.enterText(find.widgetWithText(TextField, 'Confirme sua senha'), '654321');
     await tester.pump();
     expect(find.text('As senhas não são iguais'), findsOneWidget);
+  });
+
+  test('Cada matéria tem o seu ícone', () {
+    expect(iconeDaMateria('Matemática'), Icons.calculate_rounded);
+    expect(iconeDaMateria('História'), Icons.account_balance_rounded);
+    expect(iconeDaMateria('Geografia'), Icons.public_rounded);
+    expect(iconeDaMateria('Outra matéria'), Icons.menu_book_rounded);
   });
 
   test('validarConfirmacaoSenha', () {
