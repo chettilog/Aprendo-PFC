@@ -129,7 +129,7 @@ aprendo/
 │   │       ├── tela_documentos.dart # Termos e Política
 │   │       └── tela_busca_wiki.dart
 │   └── test/                  # Testes do Flutter
-├── docs/                      # Diagrama de classes e BPMN
+├── docs/                      # Diagramas (os atuais ficam em docs/figuras-atuais)
 ├── INTEGRACAO_API.md
 └── README.md
 ```
