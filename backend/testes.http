@@ -1,8 +1,10 @@
 # Testes da API do Aprendo (extensão REST Client)
 # Ligue o servidor (node server.js). Em cada seção, envie primeiro o login.
-# Contas de teste: aluno comtermos@teste.com | admin admin@aprendo.com | senha 123456
+# As contas usadas aqui são fictícias e existem apenas no banco local.
+# Defina abaixo a senha do administrador do seu banco local (veja o README, "Contas para teste").
 
 @api = http://localhost:3000
+@senhaAdmin = defina_a_senha_do_admin_local
 
 ### ===================== SERVIDOR =====================
 
@@ -88,7 +90,7 @@ Content-Type: application/json
 
 {
   "email": "admin@aprendo.com",
-  "senha": "123456"
+  "senha": "{{senhaAdmin}}"
 }
 
 ### Senha incorreta - esperado 401

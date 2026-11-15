@@ -6,6 +6,13 @@ Plataforma gamificada de aprendizagem voltada para estudantes do ensino médio.
 
 O Aprendo utiliza mecânicas de gamificação para engajar estudantes, com foco em **verificação por produção**: o estudante precisa produzir conteúdo próprio (explicações com as suas palavras) para comprovar o aprendizado, em vez de apenas responder quizzes de múltipla escolha.
 
+## Versão publicada
+
+- **Aplicação:** https://aprendo-app.netlify.app
+- **API:** https://aprendo-pfc.onrender.com (rota de verificação: `/test-db`)
+
+O servidor da API usa um plano gratuito e é suspenso quando fica sem acessos; a primeira requisição depois disso pode levar cerca de um minuto.
+
 ## Tecnologias
 
 - **Frontend:** Flutter Web
@@ -266,11 +273,15 @@ UPDATE usuarios SET perfil = 'admin' WHERE email = 'email_da_conta@exemplo.com';
 - **API manual:** abra `backend/testes.http` no VS Code com a extensão REST Client. Envie primeiro o login de cada seção; os demais testes usam o token automaticamente.
 - **Frontend:** na pasta `frontend`, rode `flutter test`.
 
-## Contas de teste (ambiente local)
+## Contas para teste
 
-Contas usadas no desenvolvimento. Elas existem apenas no banco local e precisam ser cadastradas em um banco novo.
+O repositório não traz contas prontas nem senhas. Para testar:
 
-| Perfil | E-mail | Senha |
-|---|---|---|
-| Aluno | `comtermos@teste.com` | `123456` |
-| Admin | `admin@aprendo.com` | `123456` |
+- **Aluno:** crie uma conta pela tela de cadastro (ou pela rota `POST /cadastro`).
+- **Administrador:** crie uma conta comum e promova-a pelo banco de dados, trocando o e-mail no comando abaixo:
+
+```sql
+UPDATE usuarios SET perfil = 'admin' WHERE email = 'email-da-conta@exemplo.com';
+```
+
+Os testes manuais em `backend/testes.http` usam contas fictícias de um banco local; a senha do administrador local é definida na variável `@senhaAdmin`, no início do arquivo.
