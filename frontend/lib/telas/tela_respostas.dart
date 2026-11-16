@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../api.dart';
+import '../componentes/cartoes.dart';
 import '../tema.dart';
 import 'tela_trilhas.dart';
 
@@ -19,13 +20,6 @@ class TelaRespostas extends StatefulWidget {
   @override
   State<TelaRespostas> createState() => _TelaRespostasState();
 }
-
-// Cor, ícone e nome de cada resultado da correção
-(Color, IconData, String) aparenciaDoResultado(dynamic resultado) => switch (resultado) {
-      'suficiente' => (CoresAprendo.turquesa, Icons.check_circle, 'Suficiente'),
-      'parcial' => (CoresAprendo.ouro, Icons.lightbulb, 'Parcial'),
-      _ => (CoresAprendo.erro, Icons.refresh, 'Insuficiente'),
-    };
 
 // "2026-11-16T15:20:00.000Z" -> "16/11/2026 às 12:20" (no horário do aparelho)
 String formatarDataHora(dynamic valor) {

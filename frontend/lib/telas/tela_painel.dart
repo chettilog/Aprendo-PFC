@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api.dart';
+import '../componentes/cartoes.dart';
 import '../tema.dart';
 import 'tela_aula.dart';
 import 'tela_trilhas.dart';
 
 // ============================================================
-// DASHBOARD DO ALUNO (RF03 e RF13)
-// Mostra, de cima para baixo: saudação, botão para continuar a próxima aula,
-// nível, números grandes, últimas explicações, gráfico de XP e progresso por trilha.
-// Todos os dados vêm de uma única chamada: GET /dashboard.
+// TELA INÍCIO (aba "Início")
+// Ponto de partida do aluno: saudação, botão para continuar a próxima aula,
+// nível e últimas explicações. Os indicadores e gráficos ficam na aba Dashboard
+// (telas/tela_dashboard.dart).
+// Dados: GET /dashboard.
 // ============================================================
-const _corFogo = Color(0xFFFF9F5A);
 
 class TelaPainel extends StatefulWidget {
   const TelaPainel({super.key});
@@ -72,7 +73,6 @@ class _TelaPainelState extends State<TelaPainel> {
           final xpNoNivel = d['xp_no_nivel'] as int;
           final xpPorNivel = d['xp_por_nivel'] as int;
           final diasSeguidos = (d['dias_seguidos'] as int?) ?? 0;
-          final notaMedia = d['nota_media'] as int?;
           final proximaAula = d['proxima_aula'] as Map<String, dynamic>?;
           final ultimas = (d['ultimas_producoes'] as List<dynamic>?) ?? const [];
 
@@ -88,7 +88,7 @@ class _TelaPainelState extends State<TelaPainel> {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Veja como está o seu progresso.',
+                    'Que bom te ver por aqui.',
                     style: TextStyle(color: CoresAprendo.textoSuave),
                   ),
                   const SizedBox(height: 20),
@@ -106,51 +106,21 @@ class _TelaPainelState extends State<TelaPainel> {
                     xpQueFalta: (d['xp_para_proximo_nivel'] as int?) ?? (xpPorNivel - xpNoNivel),
                   ),
                   const SizedBox(height: 16),
-                  _GradeNumeros(
-                    numeros: [
-                      _NumeroGrande(
-                        valor: '$diasSeguidos',
-                        rotulo: diasSeguidos == 1 ? 'Dia seguido' : 'Dias seguidos',
-                        icone: Icons.local_fire_department,
-                        cor: _corFogo,
-                      ),
-                      _NumeroGrande(
-                        valor: '${d['xp_total']}',
-                        rotulo: 'XP total',
-                        icone: Icons.bolt,
-                        cor: CoresAprendo.ouro,
-                      ),
-                      _NumeroGrande(
-                        valor: '${d['aulas_concluidas']}/${d['total_aulas']}',
-                        rotulo: 'Aulas concluídas',
-                        icone: Icons.check_circle,
-                        cor: CoresAprendo.turquesa,
-                      ),
-                      _NumeroGrande(
-                        valor: notaMedia == null ? '-' : '$notaMedia',
-                        rotulo: 'Nota média',
-                        icone: Icons.grade,
-                        cor: CoresAprendo.texto,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _Secao(
+                  Secao(
                     titulo: 'Últimas explicações',
                     child: _UltimasExplicacoes(
                       producoes: ultimas,
                       enviadas: (d['producoes_enviadas'] as int?) ?? 0,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  _Secao(
-                    titulo: 'XP nos últimos 7 dias',
-                    child: _GraficoXp(dias: d['xp_ultimos_7_dias'] as List<dynamic>),
-                  ),
-                  const SizedBox(height: 16),
-                  _Secao(
-                    titulo: 'Progresso por trilha',
-                    child: _ProgressoTrilhas(trilhas: d['trilhas'] as List<dynamic>),
+                  const SizedBox(height: 12),
+                  Text(
+                    diasSeguidos > 0
+                        ? 'Você está há $diasSeguidos ${diasSeguidos == 1 ? 'dia' : 'dias'} seguidos estudando. '
+                            'Veja todos os seus números na aba Dashboard.'
+                        : 'Veja todos os seus números na aba Dashboard.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: CoresAprendo.textoSuave),
                   ),
                 ],
               ),
@@ -303,38 +273,6 @@ class _CartaoContinuar extends StatelessWidget {
 }
 
 // Organiza os números grandes: 4 por linha em telas largas, 2 por linha no celular
-class _GradeNumeros extends StatelessWidget {
-  final List<Widget> numeros;
-
-  const _GradeNumeros({required this.numeros});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, limites) {
-        const espaco = 12.0;
-        final colunas = limites.maxWidth >= 640 ? 4 : 2;
-        final largura =
-            ((limites.maxWidth - espaco * (colunas - 1)) / colunas).floorToDouble();
-        return Wrap(
-          spacing: espaco,
-          runSpacing: espaco,
-          children: [
-            for (final numero in numeros) SizedBox(width: largura, child: numero),
-          ],
-        );
-      },
-    );
-  }
-}
-
-// Cor, ícone e nome de cada resultado da correção
-(Color, IconData, String) _aparenciaDoResultado(dynamic resultado) => switch (resultado) {
-      'suficiente' => (CoresAprendo.turquesa, Icons.check_circle, 'Suficiente'),
-      'parcial' => (CoresAprendo.ouro, Icons.lightbulb, 'Parcial'),
-      _ => (CoresAprendo.erro, Icons.refresh, 'Insuficiente'),
-    };
-
 // Lista das 3 explicações mais recentes, com a nota de cada uma
 class _UltimasExplicacoes extends StatelessWidget {
   final List<dynamic> producoes;
@@ -371,7 +309,7 @@ class _LinhaExplicacao extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (cor, icone, rotulo) = _aparenciaDoResultado(producao['resultado']);
+    final (cor, icone, rotulo) = aparenciaDoResultado(producao['resultado']);
     final nota = producao['nota'];
 
     return Padding(
@@ -399,194 +337,6 @@ class _LinhaExplicacao extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _NumeroGrande extends StatelessWidget {
-  final String valor;
-  final String rotulo;
-  final IconData icone;
-  final Color cor;
-
-  const _NumeroGrande({
-    required this.valor,
-    required this.rotulo,
-    required this.icone,
-    required this.cor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icone, color: cor, size: 28),
-            const SizedBox(height: 10),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                valor,
-                style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900, color: cor),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(rotulo, style: const TextStyle(color: CoresAprendo.textoSuave, fontSize: 13)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Secao extends StatelessWidget {
-  final String titulo;
-  final Widget child;
-
-  const _Secao({required this.titulo, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(titulo, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 16),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Gráfico de barras do XP ganho em cada um dos últimos 7 dias
-class _GraficoXp extends StatelessWidget {
-  final List<dynamic> dias;
-
-  const _GraficoXp({required this.dias});
-
-  static const _nomesDias = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
-  static const _alturaMaxima = 140.0;
-
-  String _rotulo(String data, bool ehHoje) {
-    if (ehHoje) return 'hoje';
-    return _nomesDias[DateTime.parse(data).weekday - 1];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final valores = dias.map((dia) => dia['xp'] as int).toList();
-    final maximo = valores.fold<int>(0, (a, b) => b > a ? b : a);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          height: _alturaMaxima + 48,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              for (var i = 0; i < dias.length; i++)
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        valores[i] > 0 ? '${valores[i]}' : '',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: CoresAprendo.ouro,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        height: maximo == 0
-                            ? 4
-                            : (valores[i] / maximo * _alturaMaxima).clamp(4.0, _alturaMaxima),
-                        margin: const EdgeInsets.symmetric(horizontal: 6),
-                        decoration: BoxDecoration(
-                          color: valores[i] > 0 ? CoresAprendo.ouro : CoresAprendo.superficieClara,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _rotulo(dias[i]['dia'] as String, i == dias.length - 1),
-                        style: const TextStyle(fontSize: 12, color: CoresAprendo.textoSuave),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-        if (maximo == 0) ...[
-          const SizedBox(height: 12),
-          const Text(
-            'Conclua uma aula para ganhar o seu primeiro XP.',
-            style: TextStyle(color: CoresAprendo.textoSuave),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _ProgressoTrilhas extends StatelessWidget {
-  final List<dynamic> trilhas;
-
-  const _ProgressoTrilhas({required this.trilhas});
-
-  @override
-  Widget build(BuildContext context) {
-    if (trilhas.isEmpty) {
-      return const Text('Nenhuma trilha disponível.', style: TextStyle(color: CoresAprendo.textoSuave));
-    }
-    return Column(
-      children: [
-        for (final t in trilhas)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${t['nome']}',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                    Text(
-                      '${t['aulas_concluidas']}/${t['total_aulas']} aulas · ${t['percentual']}%',
-                      style: const TextStyle(color: CoresAprendo.textoSuave, fontSize: 13),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: (t['percentual'] as int) / 100,
-                    minHeight: 10,
-                    backgroundColor: CoresAprendo.superficieClara,
-                    color: CoresAprendo.turquesa,
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
     );
   }
 }

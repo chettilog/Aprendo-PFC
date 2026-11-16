@@ -57,12 +57,14 @@ O servidor da API usa um plano gratuito e é suspenso quando fica sem acessos; a
 - A aula só conta como concluída (e libera a próxima) com resultado suficiente
 - Nível calculado pelo XP total (um novo nível a cada 100 XP)
 
-**Dashboard**
-- Botão "Continuar de onde parei", que abre a próxima aula não concluída
-- Nível, com quanto XP falta para o próximo
-- Dias seguidos de estudo, XP total, aulas concluídas e nota média em destaque
-- Últimas 3 explicações, com a nota de cada uma
-- Gráfico do XP ganho nos últimos 7 dias e progresso por trilha
+**Início e Dashboard**
+- Aba **Início**: saudação, botão "Continuar de onde parei" (abre a próxima aula não concluída), nível com o XP que falta e as últimas explicações
+- Aba **Dashboard**: indicadores (XP, nível, aulas concluídas, taxa de acerto, nota média, dias seguidos) e gráficos desenhados pelo próprio app:
+  - evolução do XP acumulado nos últimos 30 dias (linha)
+  - XP ganho por dia na última semana (barras)
+  - resultado das explicações: suficiente, parcial e insuficiente (rosca)
+  - média de cada critério da rubrica, com o ponto a melhorar
+  - desempenho por matéria e melhor nota em cada aula
 - Datas calculadas no horário de Brasília
 
 **Auditoria**
@@ -102,7 +104,8 @@ aprendo/
 │   │   │   ├── usuarios.js      # ver e editar perfil, trocar senha, excluir conta
 │   │   │   ├── trilhas.js       # trilhas e aulas
 │   │   │   ├── producoes.js     # envio da explicação, nota e XP
-│   │   │   ├── dashboard.js     # GET /dashboard
+│   │   │   ├── dashboard.js     # GET /dashboard (resumo da aba Início)
+│   │   │   ├── estatisticas.js  # GET /estatisticas (gráficos da aba Dashboard)
 │   │   │   ├── admin.js         # GET /logs
 │   │   │   ├── documentos.js    # termos e política
 │   │   │   ├── wiki.js          # consulta à Wikipedia
@@ -126,12 +129,16 @@ aprendo/
 │   │   ├── tema.dart          # Cores e tema visual
 │   │   ├── validacoes.dart    # Regras de validação dos formulários
 │   │   ├── componentes/
-│   │   │   └── campo_senha.dart # Campo de senha com botão de mostrar/ocultar
+│   │   │   ├── campo_senha.dart # Campo de senha com botão de mostrar/ocultar
+│   │   │   └── cartoes.dart     # Cartões e indicadores usados por várias telas
 │   │   └── telas/
 │   │       ├── tela_login.dart
 │   │       ├── tela_cadastro.dart
 │   │       ├── tela_inicio.dart     # Navegação (Início, Trilhas, Perfil)
-│   │       ├── tela_painel.dart     # Dashboard
+│   │       ├── tela_painel.dart     # Aba Início
+│   │       ├── tela_dashboard.dart  # Aba Dashboard (indicadores e gráficos)
+│   │       ├── tela_respostas.dart  # Respostas anteriores de uma aula
+│   │       ├── tela_editar_perfil.dart # Editar nome e trocar senha
 │   │       ├── tela_trilhas.dart    # Trilhas e caminho de aulas
 │   │       ├── tela_aula.dart       # Aula, explicação e feedback
 │   │       ├── tela_perfil.dart
@@ -162,7 +169,8 @@ aprendo/
 | GET | `/aulas/:id` | JWT | Conteúdo de uma aula |
 | POST | `/aulas/:id/producoes` | JWT | Envia a explicação do aluno, retorna o feedback e o XP |
 | GET | `/aulas/:id/producoes` | JWT | Respostas anteriores do aluno na aula, com nota, comentário e critérios |
-| GET | `/dashboard` | JWT | Dados do dashboard do aluno |
+| GET | `/dashboard` | JWT | Resumo da aba Início (próxima aula, nível, últimas explicações) |
+| GET | `/estatisticas` | JWT | Indicadores e dados dos gráficos da aba Dashboard |
 
 ## Como rodar o projeto
 

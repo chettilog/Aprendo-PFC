@@ -354,3 +354,50 @@ describe('dashboard (RF13)', () => {
     expect((await request(app).get('/dashboard').set(auth)).status).toBe(500);
   });
 });
+
+describe('estatísticas da aba Dashboard', () => {
+  test('monta indicadores, séries e desempenho por matéria', async () => {
+    banco([
+      ['AS total FROM movimentacoes_xp', { rows: [{ total: 120 }] }],
+      ["FILTER (WHERE f.resultado = 'suficiente')", { rows: [{ total: 4, suficiente: 2, parcial: 1, insuficiente: 1, nota_media: 66 }] }],
+      ['generate_series', { rows: [{ dia: '2026-11-15', xp: 20 }, { dia: '2026-11-16', xp: 50 }] }],
+      ['BOOL_OR', { rows: [
+        { aula_id: 1, titulo: 'A1', materia: 'Matemática', trilha_nome: 'Funções', melhor_nota: 90, tentativas: 2, concluida: true, xp: 50 },
+        { aula_id: 2, titulo: 'A2', materia: 'Matemática', trilha_nome: 'Funções', melhor_nota: 50, tentativas: 1, concluida: false, xp: 25 },
+        { aula_id: 3, titulo: 'B1', materia: 'História', trilha_nome: 'Revolução', melhor_nota: null, tentativas: 0, concluida: false, xp: 0 },
+      ] }],
+      ["criterios->>'conceito'", { rows: [{ avaliadas: 3, conceito: 40, completude: 20, clareza: 15 }] }],
+      ['AS dia_estudado', { rows: [{ dia_estudado: '2026-11-16', hoje: '2026-11-16' }] }],
+    ]);
+    const r = await request(app).get('/estatisticas').set(auth);
+    expect(r.status).toBe(200);
+    const e = r.body.estatisticas;
+    expect(e.resumo).toMatchObject({
+      xp_total: 120, nivel: 2, aulas_concluidas: 1, total_aulas: 3,
+      producoes_enviadas: 4, nota_media: 66, taxa_acerto: 50, dias_seguidos: 1,
+    });
+    expect(e.resultados).toEqual({ suficiente: 2, parcial: 1, insuficiente: 1 });
+    // XP acumulado: antes do período havia 120 - 70 = 50
+    expect(e.xp_por_dia.map(d => d.acumulado)).toEqual([70, 120]);
+    expect(e.criterios_medios.conceito).toBe(40);
+    const mat = e.por_materia.find(m => m.materia === 'Matemática');
+    expect(mat).toEqual({ materia: 'Matemática', total_aulas: 2, aulas_concluidas: 1, xp: 75, percentual: 50, nota_media: 70 });
+    expect(e.por_materia.find(m => m.materia === 'História').nota_media).toBeNull();
+  });
+
+  test('aluno novo, sem nenhum dado, não quebra', async () => {
+    banco([]);
+    const r = await request(app).get('/estatisticas').set(auth);
+    expect(r.status).toBe(200);
+    expect(r.body.estatisticas.resumo).toMatchObject({
+      xp_total: 0, nivel: 1, producoes_enviadas: 0, nota_media: null, taxa_acerto: 0, dias_seguidos: 0,
+    });
+    expect(r.body.estatisticas.criterios_medios.avaliadas).toBe(0);
+  });
+
+  test('sem token: 401; erro no banco: 500', async () => {
+    expect((await request(app).get('/estatisticas')).status).toBe(401);
+    banco([['AS total FROM movimentacoes_xp', new Error('fora do ar')]]);
+    expect((await request(app).get('/estatisticas').set(auth)).status).toBe(500);
+  });
+});

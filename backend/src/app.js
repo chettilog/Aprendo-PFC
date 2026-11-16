@@ -20,6 +20,7 @@ app.use(require('./rotas/documentos'));   // GET /termos, GET /politica
 app.use(require('./rotas/wiki'));         // GET /wiki/:topico
 app.use(require('./rotas/trilhas'));      // GET /trilhas, /trilhas/:id/aulas, /aulas/:id
 app.use(require('./rotas/producoes'));    // POST e GET /aulas/:id/producoes
-app.use(require('./rotas/dashboard'));    // GET /dashboard
+app.use(require('./rotas/dashboard'));    // GET /dashboard (resumo da tela Início)
+app.use(require('./rotas/estatisticas')); // GET /estatisticas (aba Dashboard, com os gráficos)
 
 module.exports = app;
