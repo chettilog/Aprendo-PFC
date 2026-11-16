@@ -22,5 +22,6 @@ app.use(require('./rotas/trilhas'));      // GET /trilhas, /trilhas/:id/aulas, /
 app.use(require('./rotas/producoes'));    // POST e GET /aulas/:id/producoes
 app.use(require('./rotas/dashboard'));    // GET /dashboard (resumo da tela Início)
 app.use(require('./rotas/estatisticas')); // GET /estatisticas (aba Dashboard, com os gráficos)
+app.use(require('./rotas/ranking'));      // ranking entre colegas (código Nome#1234)
 
 module.exports = app;

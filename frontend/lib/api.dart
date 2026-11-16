@@ -52,6 +52,15 @@ Future<dynamic> apiPut(String caminho, Map<String, dynamic> corpo) async {
   return _tratarResposta(resposta);
 }
 
+// DELETE em uma rota protegida
+Future<dynamic> apiDelete(String caminho) async {
+  final resposta = await http.delete(
+    Uri.parse('$apiBase$caminho'),
+    headers: await _cabecalhos(),
+  );
+  return _tratarResposta(resposta);
+}
+
 // POST em uma rota protegida, com corpo em JSON
 Future<dynamic> apiPost(String caminho, Map<String, dynamic> corpo) async {
   final resposta = await http.post(

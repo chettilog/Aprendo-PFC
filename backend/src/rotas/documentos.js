@@ -20,7 +20,7 @@ router.get('/termos', (req, res) => {
 });
 
 router.get('/politica', (req, res) => {
-  enviarDocumento(res, 'politica-de-privacidade-v1.md', '1.2', 'Erro ao carregar Política de Privacidade');
+  enviarDocumento(res, 'politica-de-privacidade-v1.md', '1.3', 'Erro ao carregar Política de Privacidade');
 });
 
 module.exports = router;

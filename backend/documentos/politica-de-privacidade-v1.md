@@ -1,7 +1,7 @@
 # Política de Privacidade — Aprendo
 
-**Versão 1.2**
-**Data de publicação: 16 de novembro de 2026** (versão 1.0: 27 de setembro de 2026)
+**Versão 1.3**
+**Data de publicação: 21 de novembro de 2026** (versão 1.0: 27 de setembro de 2026)
 
 ## 1. Quem somos
 
@@ -26,6 +26,7 @@ Nesta Política, explicamos de um jeito simples quais dados coletamos, por que c
 - O que foi feito no sistema (login, cadastro, acesso ao perfil, exclusão de conta, consultas educacionais)
 - Se a ação deu certo ou não
 - As explicações (produções) que você escreve nas aulas, a nota e o comentário que elas receberam e o XP ganho
+- O seu código de ranking (um número de 4 dígitos, sorteado no cadastro), os colegas que você adicionou ao seu ranking e se você escolheu aparecer no ranking dos colegas
 
 ### 2.3 Em tentativas de login
 
@@ -59,6 +60,8 @@ A LGPD exige que todo uso de dados tenha uma base legal. As nossas são:
 ## 5. Com quem compartilhamos
 
 **Não vendemos nem compartilhamos seus dados para fins comerciais.**
+
+**Ranking entre colegas.** Cada conta tem um código no formato `Nome#1234`, com o primeiro nome e um número sorteado. Um colega só consegue te adicionar ao ranking dele se você passar esse código. Quem te adicionar vê apenas o seu **primeiro nome, o seu nível e o seu XP**; e-mail, nome completo e explicações nunca aparecem. Não existe lista pública de alunos. A opção "Aparecer no ranking dos colegas", na aba Ranking, pode ser desligada a qualquer momento: desligada, você deixa de aparecer para todos e ninguém consegue te adicionar.
 
 Usamos alguns serviços de terceiros para fins técnicos:
 
@@ -166,4 +169,4 @@ Respondemos em até 15 dias corridos.
 ---
 
 *Aprendo Tecnologia Educacional Ltda.*
-*Versão 1.2*
+*Versão 1.3*

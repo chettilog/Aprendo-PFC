@@ -72,6 +72,12 @@ O servidor da API usa um plano gratuito e é suspenso quando fica sem acessos; a
 - Cada registro guarda ação, usuário, IP, data/hora e resultado, sem armazenar senhas ou tokens
 - Consulta dos logs pela rota `GET /logs`, restrita ao perfil admin
 
+**Ranking entre colegas**
+- Cada conta tem um código no formato `Nome#1234` (primeiro nome + número de 4 dígitos sorteado no cadastro)
+- O aluno adiciona colegas digitando o código completo e compara o XP em um ranking só entre eles
+- O ranking mostra apenas primeiro nome, nível e XP; não há lista pública de alunos
+- Opção "Aparecer no ranking dos colegas", que pode ser desligada a qualquer momento
+
 **LGPD**
 - Aceite obrigatório dos Termos de Uso e da Política de Privacidade no cadastro, com registro da versão e da data do aceite
 - Declaração obrigatória de idade mínima (12 anos) no cadastro, sem coletar a data de nascimento (minimização de dados)
@@ -82,6 +88,7 @@ O servidor da API usa um plano gratuito e é suspenso quando fica sem acessos; a
 - Logs apagados automaticamente depois de 6 meses (prazo do Marco Civil da Internet)
 - O token de login guarda apenas o id do usuário
 - Exclusão de conta pelo próprio titular, com confirmação; as explicações e o XP são removidos, e os logs que restam deixam de identificar a pessoa
+- Ranking com exposição mínima (primeiro nome, nível e XP), só para quem recebeu o código, e com opção de sair
 
 **Integração com API externa**
 - Consulta à Wikipedia via proxy no backend (o IP do usuário não é exposto ao serviço externo)
@@ -106,6 +113,7 @@ aprendo/
 │   │   │   ├── producoes.js     # envio da explicação, nota e XP
 │   │   │   ├── dashboard.js     # GET /dashboard (resumo da aba Início)
 │   │   │   ├── estatisticas.js  # GET /estatisticas (gráficos da aba Dashboard)
+│   │   │   ├── ranking.js       # ranking entre colegas
 │   │   │   ├── admin.js         # GET /logs
 │   │   │   ├── documentos.js    # termos e política
 │   │   │   ├── wiki.js          # consulta à Wikipedia
@@ -115,6 +123,7 @@ aprendo/
 │   │   │   ├── ia.js            # chamada ao Gemini com a rubrica
 │   │   │   ├── xp.js            # XP por resultado, XP a ganhar e nível
 │   │   │   ├── progresso.js     # dias seguidos de estudo e próxima aula
+│   │   │   ├── ranking.js       # código Nome#1234 e ordem do ranking
 │   │   │   └── logs.js          # auditoria, máscara de e-mail e limpeza dos logs antigos
 │   │   └── utils/
 │   │       └── validacoes.js  # validação do cadastro, ids e explicação
@@ -137,6 +146,7 @@ aprendo/
 │   │       ├── tela_inicio.dart     # Navegação (Início, Trilhas, Perfil)
 │   │       ├── tela_painel.dart     # Aba Início
 │   │       ├── tela_dashboard.dart  # Aba Dashboard (indicadores e gráficos)
+│   │       ├── tela_ranking.dart    # Aba Ranking (código e colegas)
 │   │       ├── tela_respostas.dart  # Respostas anteriores de uma aula
 │   │       ├── tela_editar_perfil.dart # Editar nome e trocar senha
 │   │       ├── tela_trilhas.dart    # Trilhas e caminho de aulas
@@ -171,6 +181,10 @@ aprendo/
 | GET | `/aulas/:id/producoes` | JWT | Respostas anteriores do aluno na aula, com nota, comentário e critérios |
 | GET | `/dashboard` | JWT | Resumo da aba Início (próxima aula, nível, últimas explicações) |
 | GET | `/estatisticas` | JWT | Indicadores e dados dos gráficos da aba Dashboard |
+| GET | `/ranking` | JWT | Código do aluno e ranking entre ele e os colegas adicionados |
+| POST | `/ranking/colegas` | JWT | Adiciona um colega pelo código `Nome#1234` |
+| DELETE | `/ranking/colegas/:codigo` | JWT | Remove um colega do ranking |
+| PUT | `/ranking/visibilidade` | JWT | Liga ou desliga "aparecer no ranking dos colegas" |
 
 ## Como rodar o projeto
 
@@ -217,6 +231,7 @@ psql -U postgres -d aprendo_db -f sql/05-novas-trilhas.sql
 psql -U postgres -d aprendo_db -f sql/06-aulas-detalhadas.sql
 psql -U postgres -d aprendo_db -f sql/07-lgpd-logs.sql
 psql -U postgres -d aprendo_db -f sql/08-aulas-resumidas.sql
+psql -U postgres -d aprendo_db -f sql/09-ranking.sql
 ```
 
 O conteúdo das aulas (título, texto, palavras-chave e resposta de referência) é cadastrado por esses scripts, direto na tabela `aulas`. Não há tela de cadastro de aulas no app.

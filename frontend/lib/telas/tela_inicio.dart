@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'tela_perfil.dart';
+import 'tela_ranking.dart';
 import 'tela_trilhas.dart';
 import 'tela_dashboard.dart';
 import 'tela_painel.dart';
 
 // ============================================================
-// TELA INICIAL: barra de navegação com Início, Trilhas, Dashboard e Perfil
+// TELA INICIAL: barra de navegação com Início, Trilhas, Dashboard, Ranking e Perfil
 // ============================================================
 class TelaInicio extends StatefulWidget {
   const TelaInicio({super.key});
@@ -24,6 +25,7 @@ class _TelaInicioState extends State<TelaInicio> {
       0 => const TelaPainel(),
       1 => const TelaTrilhas(),
       2 => const TelaDashboard(),
+      3 => const TelaRanking(),
       _ => const TelaPerfil(),
     };
 
@@ -47,6 +49,11 @@ class _TelaInicioState extends State<TelaInicio> {
             icon: Icon(Icons.insights_outlined),
             selectedIcon: Icon(Icons.insights),
             label: 'Dashboard',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.emoji_events_outlined),
+            selectedIcon: Icon(Icons.emoji_events),
+            label: 'Ranking',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
