@@ -347,6 +347,14 @@ class _CaminhoAulasState extends State<_CaminhoAulas> {
       return indice == indiceAtual ? _EstadoAula.atual : _EstadoAula.bloqueada;
     }
 
+    // Níveis da trilha: o nível 2 só libera depois de concluir todas as aulas do nível 1
+    int nivelDe(int indice) => (aulas[indice]['nivel'] as num?)?.toInt() ?? 1;
+    final temNiveis = aulas.any((a) => ((a['nivel'] as num?)?.toInt() ?? 1) > 1);
+    bool comecaNivel(int indice) =>
+        temNiveis && (indice == 0 || nivelDe(indice) != nivelDe(indice - 1));
+    // O nível está liberado quando todas as aulas antes dele já foram concluídas
+    bool nivelLiberado(int indice) => indiceAtual == -1 || indiceAtual >= indice;
+
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -356,7 +364,13 @@ class _CaminhoAulasState extends State<_CaminhoAulas> {
           child: Column(
             children: [
               for (var i = 0; i < aulas.length; i++) ...[
-                if (i > 0)
+                if (comecaNivel(i))
+                  _CabecalhoNivel(
+                    nivel: nivelDe(i),
+                    liberado: nivelLiberado(i),
+                    primeiro: i == 0,
+                  )
+                else if (i > 0)
                   _Conector(
                     de: _posicao(i - 1),
                     ate: _posicao(i),
@@ -377,6 +391,56 @@ class _CaminhoAulasState extends State<_CaminhoAulas> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Faixa que separa os níveis da trilha no caminho.
+// Quando o nível ainda está bloqueado, explica o que falta para liberar.
+class _CabecalhoNivel extends StatelessWidget {
+  final int nivel;
+  final bool liberado;
+  final bool primeiro;
+
+  const _CabecalhoNivel({required this.nivel, required this.liberado, required this.primeiro});
+
+  @override
+  Widget build(BuildContext context) {
+    final cor = liberado ? CoresAprendo.ouro : CoresAprendo.textoSuave;
+    return Padding(
+      padding: EdgeInsets.only(top: primeiro ? 0 : 28, bottom: 20),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: Divider(color: cor.withValues(alpha: 0.4))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(liberado ? Icons.flag_rounded : Icons.lock_rounded, size: 18, color: cor),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Nível $nivel',
+                      style: TextStyle(color: cor, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(child: Divider(color: cor.withValues(alpha: 0.4))),
+            ],
+          ),
+          if (!liberado) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Conclua o nível ${nivel - 1} para liberar',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: CoresAprendo.textoSuave, fontSize: 13),
+            ),
+          ],
+        ],
       ),
     );
   }

@@ -184,6 +184,11 @@ Authorization: Bearer {{loginAluno.response.body.token}}
 GET {{api}}/aulas/1
 Authorization: Bearer {{loginAluno.response.body.token}}
 
+### Aula do nivel 2 sem ter concluido o nivel 1 - esperado 403
+### (troque 13 pelo id de uma aula de ordem 4 ou 5 que o aluno ainda nao liberou)
+GET {{api}}/aulas/13
+Authorization: Bearer {{loginAluno.response.body.token}}
+
 ### Id invalido - esperado 400
 GET {{api}}/aulas/abc
 Authorization: Bearer {{loginAluno.response.body.token}}

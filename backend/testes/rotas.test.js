@@ -232,6 +232,26 @@ describe('trilhas e aulas (RF04 e RF05)', () => {
     banco([['FROM aulas a', { rows: [{ id: 1, titulo: 'Funções' }] }]]);
     expect((await request(app).get('/aulas/1').set(auth)).body.aula.titulo).toBe('Funções');
   });
+  test('aula liberada abre e não devolve o campo liberada', async () => {
+    banco([['FROM aulas a', { rows: [{ id: 4, titulo: 'Massas de ar', nivel: 2, liberada: true }] }]]);
+    const r = await request(app).get('/aulas/4').set(auth);
+    expect(r.status).toBe(200);
+    expect(r.body.aula.nivel).toBe(2);
+    expect(r.body.aula).not.toHaveProperty('liberada');
+  });
+  test('níveis: aula bloqueada não abre (403)', async () => {
+    banco([['FROM aulas a', { rows: [{ id: 4, titulo: 'Massas de ar', nivel: 2, liberada: false }] }]]);
+    const r = await request(app).get('/aulas/4').set(auth);
+    expect(r.status).toBe(403);
+    expect(r.body.error).toMatch(/anteriores/);
+  });
+  test('níveis: a consulta confere as aulas anteriores do próprio aluno', async () => {
+    banco([['FROM aulas a', { rows: [{ id: 4, liberada: true }] }]]);
+    await request(app).get('/aulas/4').set(auth);
+    const [sql, params] = pool.query.mock.calls[0];
+    expect(sql).toContain('anterior.ordem < a.ordem');
+    expect(params).toEqual(['4', 7]);
+  });
 });
 
 describe('produção, avaliação e XP (RF06, RF07 e RF08)', () => {
@@ -263,6 +283,13 @@ describe('produção, avaliação e XP (RF06, RF07 e RF08)', () => {
     banco([]);
     const r = await request(app).post('/aulas/1/producoes').set(auth).send({ conteudo: BOA });
     expect(r.status).toBe(404);
+  });
+  test('níveis: não aceita explicação de aula bloqueada (403)', async () => {
+    banco([['FROM aulas a', { rows: [{ ...aula, liberada: false }] }]]);
+    const client = transacao(0);
+    const r = await request(app).post('/aulas/1/producoes').set(auth).send({ conteudo: BOA });
+    expect(r.status).toBe(403);
+    expect(client.query).not.toHaveBeenCalled();
   });
   test('resposta certa ganha 50 XP', async () => {
     banco([['FROM aulas a', { rows: [aula] }]]);

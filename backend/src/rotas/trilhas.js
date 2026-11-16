@@ -44,7 +44,7 @@ router.get('/trilhas/:id/aulas', verificarToken, async (req, res) => {
     }
 
     const aulas = await pool.query(
-      `SELECT a.id, a.titulo, a.ordem,
+      `SELECT a.id, a.titulo, a.ordem, a.nivel,
               EXISTS (
                 SELECT 1 FROM producoes p
                 JOIN feedbacks f ON f.producao_id = p.id
@@ -78,7 +78,9 @@ router.get('/trilhas/:id/aulas', verificarToken, async (req, res) => {
   }
 });
 
-// Exibe o conteúdo de uma aula (somente de trilhas ativas)
+// Exibe o conteúdo de uma aula (somente de trilhas ativas).
+// A aula só abre se o aluno já concluiu todas as anteriores da trilha
+// (liberação sequencial, que também libera o nível 2 depois do nível 1).
 router.get('/aulas/:id', verificarToken, async (req, res) => {
   const { id } = req.params;
   if (!idValido(id)) {
@@ -87,16 +89,30 @@ router.get('/aulas/:id', verificarToken, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT a.id, a.trilha_id, a.titulo, a.conteudo, a.ordem, t.nome AS trilha_nome
+      `SELECT a.id, a.trilha_id, a.titulo, a.conteudo, a.ordem, a.nivel, t.nome AS trilha_nome,
+              NOT EXISTS (
+                SELECT 1 FROM aulas anterior
+                WHERE anterior.trilha_id = a.trilha_id AND anterior.ordem < a.ordem
+                  AND NOT EXISTS (
+                    SELECT 1 FROM producoes p
+                    JOIN feedbacks f ON f.producao_id = p.id
+                    WHERE p.aula_id = anterior.id AND p.usuario_id = $2
+                      AND f.resultado = 'suficiente'
+                  )
+              ) AS liberada
        FROM aulas a
        JOIN trilhas t ON t.id = a.trilha_id
        WHERE a.id = $1 AND t.ativa = true`,
-      [id]
+      [id, req.usuario.id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Aula não encontrada' });
     }
-    res.json({ aula: result.rows[0] });
+    const { liberada, ...aula } = result.rows[0];
+    if (liberada === false) {
+      return res.status(403).json({ error: 'Conclua as aulas anteriores para liberar esta aula' });
+    }
+    res.json({ aula });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar aula', detalhes: err.message });
   }

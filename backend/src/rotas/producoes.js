@@ -23,14 +23,28 @@ router.post('/aulas/:id/producoes', verificarToken, async (req, res) => {
   let client;
   try {
     const aula = await pool.query(
-      `SELECT a.id, a.titulo, a.conteudo, a.resposta_referencia, a.palavras_chave
+      `SELECT a.id, a.titulo, a.conteudo, a.resposta_referencia, a.palavras_chave,
+              NOT EXISTS (
+                SELECT 1 FROM aulas anterior
+                WHERE anterior.trilha_id = a.trilha_id AND anterior.ordem < a.ordem
+                  AND NOT EXISTS (
+                    SELECT 1 FROM producoes p
+                    JOIN feedbacks f ON f.producao_id = p.id
+                    WHERE p.aula_id = anterior.id AND p.usuario_id = $2
+                      AND f.resultado = 'suficiente'
+                  )
+              ) AS liberada
        FROM aulas a
        JOIN trilhas t ON t.id = a.trilha_id
        WHERE a.id = $1 AND t.ativa = true`,
-      [id]
+      [id, req.usuario.id]
     );
     if (aula.rows.length === 0) {
       return res.status(404).json({ error: 'Aula não encontrada' });
+    }
+    // Liberação sequencial também no servidor: não dá para enviar explicação de aula bloqueada
+    if (aula.rows[0].liberada === false) {
+      return res.status(403).json({ error: 'Conclua as aulas anteriores para liberar esta aula' });
     }
 
     // Avalia ANTES de abrir a transação: a IA pode levar alguns segundos

@@ -33,9 +33,11 @@ O servidor da API usa um plano gratuito e é suspenso quando fica sem acessos; a
 - Edição do perfil: troca do nome e troca da senha, que exige a senha atual (o e-mail não é editável)
 
 **Trilhas e aulas**
-- Três trilhas de exemplo: Matemática (Fundamentos de Funções), História (Revolução Industrial) e Geografia (Clima e Tempo), com 3 aulas cada
+- Três trilhas de exemplo: Matemática (Fundamentos de Funções), História (Revolução Industrial) e Geografia (Clima e Tempo), com 5 aulas cada, divididas em dois níveis
 - Lista de trilhas por matéria, com o progresso do aluno em cada uma
 - Aulas em formato de caminho: concluídas, aula atual e aulas bloqueadas até a anterior ser concluída
+- **Níveis de trilha**: o nível 1 tem 3 aulas e o nível 2 tem 2 aulas novas, liberadas quando o aluno conclui todo o nível 1. O caminho mostra uma faixa "Nível 2" com o aviso do que falta
+- A liberação também é conferida no servidor: abrir ou responder uma aula bloqueada devolve 403
 - Cada aula do caminho mostra a melhor nota do aluno; a aula com acerto parcial fica marcada como "falta completar"
 - Ao abrir uma trilha, a tela rola sozinha até a aula atual
 
@@ -143,13 +145,13 @@ aprendo/
 │   │   └── telas/
 │   │       ├── tela_login.dart
 │   │       ├── tela_cadastro.dart
-│   │       ├── tela_inicio.dart     # Navegação (Início, Trilhas, Perfil)
+│   │       ├── tela_inicio.dart     # Navegação (Início, Trilhas, Dashboard, Ranking, Perfil)
 │   │       ├── tela_painel.dart     # Aba Início
 │   │       ├── tela_dashboard.dart  # Aba Dashboard (indicadores e gráficos)
 │   │       ├── tela_ranking.dart    # Aba Ranking (código e colegas)
 │   │       ├── tela_respostas.dart  # Respostas anteriores de uma aula
 │   │       ├── tela_editar_perfil.dart # Editar nome e trocar senha
-│   │       ├── tela_trilhas.dart    # Trilhas e caminho de aulas
+│   │       ├── tela_trilhas.dart    # Trilhas e caminho de aulas (com os níveis)
 │   │       ├── tela_aula.dart       # Aula, explicação e feedback
 │   │       ├── tela_perfil.dart
 │   │       ├── tela_documentos.dart # Termos e Política
@@ -232,6 +234,7 @@ psql -U postgres -d aprendo_db -f sql/06-aulas-detalhadas.sql
 psql -U postgres -d aprendo_db -f sql/07-lgpd-logs.sql
 psql -U postgres -d aprendo_db -f sql/08-aulas-resumidas.sql
 psql -U postgres -d aprendo_db -f sql/09-ranking.sql
+psql -U postgres -d aprendo_db -f sql/10-niveis-trilha.sql
 ```
 
 O conteúdo das aulas (título, texto, palavras-chave e resposta de referência) é cadastrado por esses scripts, direto na tabela `aulas`. Não há tela de cadastro de aulas no app.
