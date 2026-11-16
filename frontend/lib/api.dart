@@ -42,6 +42,16 @@ Future<dynamic> apiGet(String caminho) async {
   return _tratarResposta(resposta);
 }
 
+// PUT em uma rota protegida, com corpo em JSON (usado para editar dados)
+Future<dynamic> apiPut(String caminho, Map<String, dynamic> corpo) async {
+  final resposta = await http.put(
+    Uri.parse('$apiBase$caminho'),
+    headers: await _cabecalhos(),
+    body: jsonEncode(corpo),
+  );
+  return _tratarResposta(resposta);
+}
+
 // POST em uma rota protegida, com corpo em JSON
 Future<dynamic> apiPost(String caminho, Map<String, dynamic> corpo) async {
   final resposta = await http.post(

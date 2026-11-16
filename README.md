@@ -30,6 +30,7 @@ O servidor da API usa um plano gratuito e é suspenso quando fica sem acessos; a
 - Senhas criptografadas com bcrypt e login com token JWT (expiração de 2 horas)
 - Perfis de usuário (`aluno` e `admin`), com permissões verificadas no backend a cada requisição
 - Logout com remoção do token
+- Edição do perfil: troca do nome e troca da senha, que exige a senha atual (o e-mail não é editável)
 
 **Trilhas e aulas**
 - Três trilhas de exemplo: Matemática (Fundamentos de Funções), História (Revolução Industrial) e Geografia (Clima e Tempo), com 3 aulas cada
@@ -47,6 +48,7 @@ O servidor da API usa um plano gratuito e é suspenso quando fica sem acessos; a
   3. **Reserva**: se todas as tentativas falharem ou não houver chave configurada, a nota vem da proporção de palavras-chave da aula citadas
 - Resultado: nota ≥ 70 é **suficiente**, de 40 a 69 é **parcial**, abaixo de 40 é **insuficiente**, sempre com um comentário do que faltou
 - A explicação pode ser refeita para melhorar a nota
+- Botão "Ver minhas respostas anteriores" na aula: mostra cada explicação já enviada, com data, nota, comentário e critérios, e permite reaproveitar o texto
 
 **Gamificação**
 - Cada aula vale até 50 XP: suficiente = 50 XP, parcial = 25 XP, insuficiente = 0
@@ -97,7 +99,7 @@ aprendo/
 │   │   │   └── autenticacao.js  # verificarToken (JWT) e exigirPerfil (admin)
 │   │   ├── rotas/             # Um arquivo por parte do sistema
 │   │   │   ├── autenticacao.js  # POST /cadastro, POST /login
-│   │   │   ├── usuarios.js      # GET /perfil, DELETE /minha-conta
+│   │   │   ├── usuarios.js      # ver e editar perfil, trocar senha, excluir conta
 │   │   │   ├── trilhas.js       # trilhas e aulas
 │   │   │   ├── producoes.js     # envio da explicação, nota e XP
 │   │   │   ├── dashboard.js     # GET /dashboard
@@ -150,6 +152,8 @@ aprendo/
 | GET | `/termos` | Público | Termos de Uso |
 | GET | `/politica` | Público | Política de Privacidade |
 | GET | `/perfil` | JWT | Dados do usuário logado |
+| PUT | `/perfil` | JWT | Altera o nome do usuário logado (RF15) |
+| PUT | `/perfil/senha` | JWT | Troca a senha, exigindo a senha atual (RF15) |
 | DELETE | `/minha-conta` | JWT | Exclui a conta do titular |
 | GET | `/logs` | JWT + admin | Logs de auditoria |
 | GET | `/wiki/:topico` | JWT | Consulta à Wikipedia |
@@ -157,7 +161,7 @@ aprendo/
 | GET | `/trilhas/:id/aulas` | JWT | Aulas da trilha, com a situação (concluída, parcial) e a melhor nota do aluno |
 | GET | `/aulas/:id` | JWT | Conteúdo de uma aula |
 | POST | `/aulas/:id/producoes` | JWT | Envia a explicação do aluno, retorna o feedback e o XP |
-| GET | `/aulas/:id/producoes` | JWT | Explicações do aluno na aula, com o feedback |
+| GET | `/aulas/:id/producoes` | JWT | Respostas anteriores do aluno na aula, com nota, comentário e critérios |
 | GET | `/dashboard` | JWT | Dados do dashboard do aluno |
 
 ## Como rodar o projeto
@@ -204,6 +208,7 @@ psql -U postgres -d aprendo_db -f sql/04-avaliacao-por-nota.sql
 psql -U postgres -d aprendo_db -f sql/05-novas-trilhas.sql
 psql -U postgres -d aprendo_db -f sql/06-aulas-detalhadas.sql
 psql -U postgres -d aprendo_db -f sql/07-lgpd-logs.sql
+psql -U postgres -d aprendo_db -f sql/08-aulas-resumidas.sql
 ```
 
 O conteúdo das aulas (título, texto, palavras-chave e resposta de referência) é cadastrado por esses scripts, direto na tabela `aulas`. Não há tela de cadastro de aulas no app.

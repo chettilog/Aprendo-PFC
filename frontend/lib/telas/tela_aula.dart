@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../api.dart';
 import '../tema.dart';
+import 'tela_respostas.dart';
 import 'tela_trilhas.dart';
 
 // Mesmos limites do back-end (PRODUCAO_MIN e PRODUCAO_MAX em backend/src/utils/validacoes.js)
@@ -85,6 +86,22 @@ class _TelaAulaState extends State<TelaAula> {
   // Volta ao formulário mantendo o texto, para o aluno completar a explicação
   void _tentarDeNovo() => setState(() => _resultado = null);
 
+  // Abre o histórico de respostas da aula. Se o aluno escolher "Reaproveitar este texto",
+  // o texto volta para o campo da explicação, pronto para ser revisado e enviado de novo.
+  Future<void> _verRespostasAnteriores(String tituloAula) async {
+    final texto = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TelaRespostas(aulaId: widget.id, tituloAula: tituloAula),
+      ),
+    );
+    if (texto == null || !mounted) return;
+    setState(() {
+      _producaoController.text = texto;
+      _resultado = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -135,7 +152,16 @@ class _TelaAulaState extends State<TelaAula> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _verRespostasAnteriores('${aula['titulo']}'),
+                      icon: const Icon(Icons.history),
+                      label: const Text('Ver minhas respostas anteriores'),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   if (_resultado == null) _formulario() else _feedback(),
                 ],
               ),

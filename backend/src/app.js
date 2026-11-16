@@ -14,7 +14,7 @@ app.use(cors());
 // Cada arquivo da pasta rotas/ cuida de uma parte do sistema
 app.use(require('./rotas/status'));       // GET /  e  GET /test-db
 app.use(require('./rotas/autenticacao')); // POST /cadastro, POST /login
-app.use(require('./rotas/usuarios'));     // GET /perfil, DELETE /minha-conta
+app.use(require('./rotas/usuarios'));     // GET e PUT /perfil, PUT /perfil/senha, DELETE /minha-conta
 app.use(require('./rotas/admin'));        // GET /logs (só admin)
 app.use(require('./rotas/documentos'));   // GET /termos, GET /politica
 app.use(require('./rotas/wiki'));         // GET /wiki/:topico

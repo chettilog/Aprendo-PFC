@@ -6,6 +6,7 @@ import '../api.dart';
 import '../tema.dart';
 import 'tela_busca_wiki.dart';
 import 'tela_documentos.dart';
+import 'tela_editar_perfil.dart';
 import 'tela_login.dart';
 
 // ============================================================
@@ -81,6 +82,23 @@ class _TelaPerfilState extends State<TelaPerfil> {
         _erro = 'Erro de conexão: $e';
         _carregando = false;
       });
+    }
+  }
+
+  // Abre a edição do perfil (RF15) e, ao voltar, recarrega os dados
+  Future<void> _editarPerfil() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TelaEditarPerfil(
+          nomeAtual: '${_dadosUsuario!['nome']}',
+          email: '${_dadosUsuario!['email']}',
+        ),
+      ),
+    );
+    if (mounted) {
+      setState(() => _carregando = true);
+      _carregarPerfil();
     }
   }
 
@@ -213,6 +231,12 @@ class _TelaPerfilState extends State<TelaPerfil> {
                                 ],
                               ),
                             ),
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton.icon(
+                            onPressed: _editarPerfil,
+                            icon: const Icon(Icons.edit),
+                            label: const Text('Editar perfil'),
                           ),
                                                     const SizedBox(height: 32),
                           FilledButton.icon(

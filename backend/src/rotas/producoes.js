@@ -118,7 +118,7 @@ router.get('/aulas/:id/producoes', verificarToken, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT p.id, p.tipo, p.conteudo, p.enviada_em, f.resultado, f.nota, f.comentario
+      `SELECT p.id, p.tipo, p.conteudo, p.enviada_em, f.resultado, f.nota, f.comentario, f.criterios
        FROM producoes p
        LEFT JOIN feedbacks f ON f.producao_id = p.id
        WHERE p.usuario_id = $1 AND p.aula_id = $2

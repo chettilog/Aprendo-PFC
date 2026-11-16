@@ -148,6 +148,50 @@ describe('token e perfil de acesso', () => {
   });
 });
 
+describe('editar perfil (RF15)', () => {
+  test('troca o nome', async () => {
+    banco([['UPDATE usuarios SET nome', { rows: [{ id: 7, nome: 'Ana Clara' }] }]]);
+    const r = await request(app).put('/perfil').set(auth).send({ nome: '  Ana Clara  ' });
+    expect(r.status).toBe(200);
+    expect(r.body.usuario.nome).toBe('Ana Clara');
+    const params = pool.query.mock.calls.find(c => c[0].includes('UPDATE usuarios SET nome'))[1];
+    expect(params).toEqual(['Ana Clara', 7]);
+  });
+  test('nome inválido: 400', async () => {
+    expect((await request(app).put('/perfil').set(auth).send({ nome: 'A' })).status).toBe(400);
+    expect((await request(app).put('/perfil').set(auth).send({})).status).toBe(400);
+  });
+  test('sem token: 401', async () => {
+    expect((await request(app).put('/perfil').send({ nome: 'Ana' })).status).toBe(401);
+  });
+
+  test('troca a senha com a senha atual correta', async () => {
+    const hash = await bcrypt.hash('123456', 4);
+    banco([['SELECT senha FROM usuarios', { rows: [{ senha: hash }] }]]);
+    const r = await request(app).put('/perfil/senha').set(auth)
+      .send({ senhaAtual: '123456', novaSenha: 'novaSenha1' });
+    expect(r.status).toBe(200);
+    const novo = pool.query.mock.calls.find(c => c[0].startsWith('UPDATE usuarios SET senha'))[1];
+    expect(novo[0]).not.toBe('novaSenha1'); // guardada como hash
+    expect(await bcrypt.compare('novaSenha1', novo[0])).toBe(true);
+  });
+  test('senha atual errada: 400 e nada é alterado', async () => {
+    const hash = await bcrypt.hash('123456', 4);
+    banco([['SELECT senha FROM usuarios', { rows: [{ senha: hash }] }]]);
+    const r = await request(app).put('/perfil/senha').set(auth)
+      .send({ senhaAtual: 'errada', novaSenha: 'novaSenha1' });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toMatch(/atual está incorreta/);
+    expect(pool.query.mock.calls.some(c => c[0].startsWith('UPDATE usuarios SET senha'))).toBe(false);
+  });
+  test('nova senha curta, igual à atual ou senha atual vazia: 400', async () => {
+    const enviar = corpo => request(app).put('/perfil/senha').set(auth).send(corpo);
+    expect((await enviar({ senhaAtual: '123456', novaSenha: '123' })).status).toBe(400);
+    expect((await enviar({ senhaAtual: '123456', novaSenha: '123456' })).status).toBe(400);
+    expect((await enviar({ novaSenha: 'novaSenha1' })).status).toBe(400);
+  });
+});
+
 describe('documentos', () => {
   test('termos e política são públicos', async () => {
     expect((await request(app).get('/termos')).status).toBe(200);
@@ -255,9 +299,14 @@ describe('produção, avaliação e XP (RF06, RF07 e RF08)', () => {
     expect(r.status).toBe(500);
     expect(client.query).toHaveBeenCalledWith('ROLLBACK');
   });
-  test('histórico de produções', async () => {
-    banco([['FROM producoes p', { rows: [{ id: 1, nota: 80 }] }]]);
-    expect((await request(app).get('/aulas/1/producoes').set(auth)).body.producoes[0].nota).toBe(80);
+  test('histórico de produções, com nota e critérios da rubrica', async () => {
+    banco([['FROM producoes p', { rows: [{ id: 1, nota: 80, criterios: { conceito: 40 } }] }]]);
+    const r = await request(app).get('/aulas/1/producoes').set(auth);
+    expect(r.body.producoes[0].nota).toBe(80);
+    expect(r.body.producoes[0].criterios.conceito).toBe(40);
+    // só as produções do próprio aluno
+    const params = pool.query.mock.calls.find(c => c[0].includes('FROM producoes p'))[1];
+    expect(params).toEqual([7, '1']);
   });
 });
 

@@ -1,8 +1,10 @@
-// Dados da própria conta: ver perfil e excluir conta (RF03 e LGPD)
+// Dados da própria conta: ver e editar o perfil (RF15) e excluir a conta (RF21 e LGPD)
 const express = require('express');
+const bcrypt = require('bcrypt');
 const pool = require('../config/banco');
 const { verificarToken } = require('../middlewares/autenticacao');
 const { registrarLog, removerEmailDosLogs } = require('../servicos/logs');
+const { validarNome, validarSenha } = require('../utils/validacoes');
 
 const router = express.Router();
 
@@ -23,6 +25,70 @@ router.get('/perfil', verificarToken, async (req, res) => {
     res.json({ usuario: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar perfil', detalhes: err.message });
+  }
+});
+
+// Edição do perfil (RF15): o usuário troca o próprio nome.
+// O e-mail não é editável, porque é o dado de acesso à conta.
+router.put('/perfil', verificarToken, async (req, res) => {
+  const nome = (req.body || {}).nome;
+  const erro = validarNome(nome);
+  if (erro) {
+    return res.status(400).json({ error: erro });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE usuarios SET nome = $1 WHERE id = $2
+       RETURNING id, nome, email, perfil, criado_em`,
+      [nome.trim(), req.usuario.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    await registrarLog(req.usuario.id, 'edicao_perfil', 'Nome alterado pelo próprio titular', req.ip, true);
+    res.json({ message: 'Perfil atualizado com sucesso!', usuario: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao atualizar perfil', detalhes: err.message });
+  }
+});
+
+// Troca de senha (RF15): exige a senha atual, para que ninguém troque a senha
+// usando apenas um token esquecido aberto em outro aparelho
+router.put('/perfil/senha', verificarToken, async (req, res) => {
+  const { senhaAtual, novaSenha } = req.body || {};
+  if (typeof senhaAtual !== 'string' || senhaAtual.length === 0) {
+    return res.status(400).json({ error: 'Informe a senha atual' });
+  }
+  const erro = validarSenha(novaSenha);
+  if (erro) {
+    return res.status(400).json({ error: erro });
+  }
+  if (novaSenha === senhaAtual) {
+    return res.status(400).json({ error: 'A nova senha deve ser diferente da atual' });
+  }
+
+  try {
+    const busca = await pool.query('SELECT senha FROM usuarios WHERE id = $1', [req.usuario.id]);
+    if (busca.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    const confere = await bcrypt.compare(senhaAtual, busca.rows[0].senha);
+    if (!confere) {
+      await registrarLog(req.usuario.id, 'troca_senha_falha', 'Senha atual incorreta', req.ip, false);
+      // 400, e não 401: o usuário continua logado, só errou a senha atual
+      return res.status(400).json({ error: 'A senha atual está incorreta' });
+    }
+
+    const novoHash = await bcrypt.hash(novaSenha, 10);
+    await pool.query('UPDATE usuarios SET senha = $1 WHERE id = $2', [novoHash, req.usuario.id]);
+    await registrarLog(req.usuario.id, 'troca_senha', 'Senha alterada pelo próprio titular', req.ip, true);
+
+    res.json({ message: 'Senha alterada com sucesso!' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao alterar a senha', detalhes: err.message });
   }
 });
 

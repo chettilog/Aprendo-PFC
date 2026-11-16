@@ -113,6 +113,34 @@ Authorization: Bearer token_falso_qualquer
 GET {{api}}/perfil
 Authorization: Bearer {{loginAluno.response.body.token}}
 
+### Editar o nome (RF15) - esperado 200
+PUT {{api}}/perfil
+Authorization: Bearer {{loginAluno.response.body.token}}
+Content-Type: application/json
+
+{
+  "nome": "Aluno Teste"
+}
+
+### Editar com nome curto (RF15) - esperado 400
+PUT {{api}}/perfil
+Authorization: Bearer {{loginAluno.response.body.token}}
+Content-Type: application/json
+
+{
+  "nome": "A"
+}
+
+### Trocar senha com a senha atual errada (RF15) - esperado 400
+PUT {{api}}/perfil/senha
+Authorization: Bearer {{loginAluno.response.body.token}}
+Content-Type: application/json
+
+{
+  "senhaAtual": "senhaerrada",
+  "novaSenha": "novasenha123"
+}
+
 ### Logs como aluno - esperado 403 (o acesso negado fica registrado)
 GET {{api}}/logs
 Authorization: Bearer {{loginAluno.response.body.token}}

@@ -4,21 +4,33 @@
 const PRODUCAO_MIN = 40;
 const PRODUCAO_MAX = 3000;
 
+// Regras de cada campo; cada função retorna a mensagem de erro ou null se estiver tudo certo
+function validarNome(nome) {
+  if (typeof nome !== 'string' || nome.trim().length === 0) return 'Informe o nome';
+  if (nome.trim().length < 2 || nome.trim().length > 100) {
+    return 'O nome deve ter entre 2 e 100 caracteres';
+  }
+  return null;
+}
+
+function validarSenha(senha) {
+  if (typeof senha !== 'string' || senha.length < 6 || senha.length > 72) {
+    return 'A senha deve ter entre 6 e 72 caracteres';
+  }
+  return null;
+}
+
 // Valida os campos do cadastro; retorna a mensagem de erro ou null se estiver tudo certo
 function validarCadastro(nome, email, senha) {
   if (!nome || !email || typeof senha !== 'string' || senha.length === 0) {
     return 'Nome, e-mail e senha são obrigatórios';
   }
-  if (nome.length < 2 || nome.length > 100) {
-    return 'O nome deve ter entre 2 e 100 caracteres';
-  }
+  const erroNome = validarNome(nome);
+  if (erroNome) return erroNome;
   if (email.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return 'Informe um e-mail válido';
   }
-  if (senha.length < 6 || senha.length > 72) {
-    return 'A senha deve ter entre 6 e 72 caracteres';
-  }
-  return null;
+  return validarSenha(senha);
 }
 
 // Valida se o parâmetro da URL é um número inteiro positivo
@@ -41,4 +53,6 @@ function validarProducao(conteudo) {
   return { texto };
 }
 
-module.exports = { PRODUCAO_MIN, PRODUCAO_MAX, validarCadastro, idValido, validarProducao };
+module.exports = {
+  PRODUCAO_MIN, PRODUCAO_MAX, validarNome, validarSenha, validarCadastro, idValido, validarProducao,
+};

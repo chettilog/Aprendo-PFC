@@ -1,6 +1,6 @@
 // Testes das regras de XP (RF08) e das validações de entrada
 const { calcularNivel, xpDoResultado, xpAGanhar } = require('../src/servicos/xp');
-const { validarCadastro, idValido, validarProducao } = require('../src/utils/validacoes');
+const { validarCadastro, validarNome, validarSenha, idValido, validarProducao } = require('../src/utils/validacoes');
 
 describe('XP e nível', () => {
   test.each([[0, 1], [99, 1], [100, 2], [250, 3]])('%i XP -> nível %i', (xp, nivel) => {
@@ -34,6 +34,21 @@ describe('validarCadastro', () => {
     ['Ana', 'a@a.com', 'x'.repeat(73), 'senha'],
   ])('rejeita (%s, %s, senha)', (nome, email, senha, trecho) => {
     expect(validarCadastro(nome, email, senha)).toMatch(new RegExp(trecho, 'i'));
+  });
+});
+
+describe('validarNome e validarSenha', () => {
+  test('nome', () => {
+    expect(validarNome('Ana')).toBeNull();
+    expect(validarNome('  Ana  ')).toBeNull();
+    expect(validarNome('A')).toMatch(/entre 2 e 100/);
+    expect(validarNome('   ')).toMatch(/Informe/);
+    expect(validarNome(undefined)).toMatch(/Informe/);
+  });
+  test('senha', () => {
+    expect(validarSenha('123456')).toBeNull();
+    expect(validarSenha('123')).toMatch(/entre 6 e 72/);
+    expect(validarSenha(123456)).toMatch(/entre 6 e 72/);
   });
 });
 

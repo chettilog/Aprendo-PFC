@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aprendo_frontend/main.dart';
 import 'package:aprendo_frontend/telas/tela_cadastro.dart';
+import 'package:aprendo_frontend/telas/tela_editar_perfil.dart';
 import 'package:aprendo_frontend/telas/tela_trilhas.dart';
 import 'package:aprendo_frontend/validacoes.dart';
 
@@ -83,6 +84,20 @@ void main() {
     await tester.tap(find.byType(Checkbox).last);
     await tester.pump();
     expect(botaoLiberado(), isTrue);
+  });
+
+  testWidgets('Editar perfil mostra o nome, bloqueia o e-mail e pede a senha atual',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: TelaEditarPerfil(nomeAtual: 'Ana', email: 'ana@teste.com'),
+    ));
+
+    expect(find.widgetWithText(TextFormField, 'Ana'), findsOneWidget);
+    final email = tester.widget<TextField>(find.widgetWithText(TextField, 'E-mail'));
+    expect(email.enabled, isFalse);
+    expect(find.widgetWithText(TextField, 'Senha atual'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Nova senha'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Confirme a nova senha'), findsOneWidget);
   });
 
   test('Cada matéria tem o seu ícone', () {
