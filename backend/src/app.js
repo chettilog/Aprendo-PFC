@@ -14,7 +14,7 @@ app.use(cors());
 // Cada arquivo da pasta rotas/ cuida de uma parte do sistema
 app.use(require('./rotas/status'));       // GET /  e  GET /test-db
 app.use(require('./rotas/autenticacao')); // POST /cadastro, POST /login
-app.use(require('./rotas/usuarios'));     // GET e PUT /perfil, PUT /perfil/senha, DELETE /minha-conta
+app.use(require('./rotas/usuarios'));     // GET e PUT /perfil, PUT /perfil/avatar, PUT /perfil/senha, DELETE /minha-conta
 app.use(require('./rotas/admin'));        // GET /logs e GET /admin/visao-geral (só admin)
 app.use(require('./rotas/documentos'));   // GET /termos, GET /politica
 app.use(require('./rotas/wiki'));         // GET /wiki/:topico
@@ -22,6 +22,6 @@ app.use(require('./rotas/trilhas'));      // GET /trilhas, /trilhas/:id/aulas, /
 app.use(require('./rotas/producoes'));    // POST e GET /aulas/:id/producoes
 app.use(require('./rotas/dashboard'));    // GET /dashboard (resumo da tela Início)
 app.use(require('./rotas/estatisticas')); // GET /estatisticas (aba Dashboard, com os gráficos)
-app.use(require('./rotas/ranking'));      // ranking entre colegas (código Nome#1234)
+app.use(require('./rotas/ranking'));      // ranking entre colegas (código Nome#1234) e ranking geral
 
 module.exports = app;
