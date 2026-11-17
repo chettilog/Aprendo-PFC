@@ -1,11 +1,12 @@
-// Ranking entre colegas: o aluno adiciona colegas pelo código (Nome#1234) e compara o XP
+// Ranking entre colegas: o aluno adiciona colegas pelo código (Nome#1234) e compara o XP.
+// Ranking geral: os 20 alunos com mais XP, entre os que deixaram ligada a opção de aparecer no ranking.
 const express = require('express');
 const pool = require('../config/banco');
 const { verificarToken } = require('../middlewares/autenticacao');
 const { registrarLog } = require('../servicos/logs');
 const { calcularNivel } = require('../servicos/xp');
 const {
-  LIMITE_DE_COLEGAS, formatarCodigo, interpretarCodigo, nomeConfere, montarRanking,
+  LIMITE_DE_COLEGAS, TAMANHO_RANKING_GERAL, montarRankingGeral, formatarCodigo, interpretarCodigo, nomeConfere, montarRanking,
 } = require('../servicos/ranking');
 
 const router = express.Router();
@@ -24,7 +25,7 @@ router.get('/ranking', verificarToken, async (req, res) => {
     }
 
     const participantes = await pool.query(
-      `SELECT u.id, u.nome, u.codigo,
+      `SELECT u.id, u.nome, u.codigo, u.avatar,
               COALESCE((SELECT SUM(m.valor) FROM movimentacoes_xp m WHERE m.usuario_id = u.id), 0)::int AS xp_total
        FROM usuarios u
        WHERE u.id = $1
@@ -46,6 +47,46 @@ router.get('/ranking', verificarToken, async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao carregar o ranking', detalhes: err.message });
+  }
+});
+
+// Ranking geral: só alunos (o admin não entra) que deixaram "aparecer no ranking" ligado.
+// RANK() dá a mesma posição para quem empata no XP; ROW_NUMBER() corta a lista nos 20 primeiros.
+// A linha do próprio aluno sempre volta, para mostrar a posição dele mesmo fora do top 20.
+router.get('/ranking/geral', verificarToken, async (req, res) => {
+  const uid = req.usuario.id;
+  try {
+    const eu = await pool.query('SELECT aparecer_no_ranking FROM usuarios WHERE id = $1', [uid]);
+    if (eu.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    const resultado = await pool.query(
+      `WITH participantes AS (
+         SELECT u.id, u.nome, u.avatar,
+                COALESCE((SELECT SUM(m.valor) FROM movimentacoes_xp m WHERE m.usuario_id = u.id), 0)::int AS xp_total
+         FROM usuarios u
+         WHERE u.perfil = 'aluno' AND u.aparecer_no_ranking = true
+       ),
+       ordenados AS (
+         SELECT p.*,
+                RANK() OVER (ORDER BY p.xp_total DESC)::int AS posicao,
+                ROW_NUMBER() OVER (ORDER BY p.xp_total DESC, p.nome, p.id)::int AS linha,
+                COUNT(*) OVER ()::int AS total
+         FROM participantes p
+       )
+       SELECT * FROM ordenados
+       WHERE linha <= $2 OR id = $1
+       ORDER BY linha`,
+      [uid, TAMANHO_RANKING_GERAL]
+    );
+
+    res.json({
+      aparecer_no_ranking: eu.rows[0].aparecer_no_ranking,
+      ...montarRankingGeral(resultado.rows, uid, calcularNivel),
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao carregar o ranking geral', detalhes: err.message });
   }
 });
 

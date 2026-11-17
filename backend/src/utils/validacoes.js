@@ -3,6 +3,8 @@
 // Limites do texto da produção do aluno (RF06)
 const PRODUCAO_MIN = 40;
 const PRODUCAO_MAX = 3000;
+// Quantidade de avatares prontos do app (ícones numerados de 0 a 11)
+const TOTAL_AVATARES = 12;
 
 // Regras de cada campo; cada função retorna a mensagem de erro ou null se estiver tudo certo
 function validarNome(nome) {
@@ -53,6 +55,15 @@ function validarProducao(conteudo) {
   return { texto };
 }
 
+// O avatar precisa ser um número inteiro entre 0 e TOTAL_AVATARES - 1
+function validarAvatar(avatar) {
+  if (!Number.isInteger(avatar) || avatar < 0 || avatar >= TOTAL_AVATARES) {
+    return `Escolha um avatar de 0 a ${TOTAL_AVATARES - 1}`;
+  }
+  return null;
+}
+
 module.exports = {
-  PRODUCAO_MIN, PRODUCAO_MAX, validarNome, validarSenha, validarCadastro, idValido, validarProducao,
+  PRODUCAO_MIN, PRODUCAO_MAX, TOTAL_AVATARES,
+  validarNome, validarSenha, validarCadastro, idValido, validarProducao, validarAvatar,
 };

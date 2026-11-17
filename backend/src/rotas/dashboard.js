@@ -18,7 +18,7 @@ router.get('/dashboard', verificarToken, async (req, res) => {
   try {
     // As consultas rodam em paralelo
     const [usuario, xp, producoes, trilhas, semana, diasEstudados, ultimas, aulas] = await Promise.all([
-      pool.query('SELECT nome FROM usuarios WHERE id = $1', [uid]),
+      pool.query('SELECT nome, avatar FROM usuarios WHERE id = $1', [uid]),
       pool.query(
         'SELECT COALESCE(SUM(valor), 0)::int AS total FROM movimentacoes_xp WHERE usuario_id = $1',
         [uid]
@@ -107,6 +107,7 @@ router.get('/dashboard', verificarToken, async (req, res) => {
     res.json({
       dashboard: {
         nome: usuario.rows[0]?.nome ?? null,
+        avatar: usuario.rows[0]?.avatar ?? 0,
         xp_total: xpTotal,
         nivel: calcularNivel(xpTotal),
         xp_no_nivel: xpTotal % XP_POR_NIVEL,

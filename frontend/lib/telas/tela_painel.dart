@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api.dart';
+import '../componentes/avatar.dart';
 import '../componentes/cartoes.dart';
 import '../tema.dart';
 import 'tela_aula.dart';
@@ -82,14 +83,27 @@ class _TelaPainelState extends State<TelaPainel> {
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  Text(
-                    primeiroNome.isEmpty ? 'Olá!' : 'Olá, $primeiroNome!',
-                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Que bom te ver por aqui.',
-                    style: TextStyle(color: CoresAprendo.textoSuave),
+                  Row(
+                    children: [
+                      AvatarAprendo(indice: indiceDoAvatar(d['avatar']), tamanho: 56),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              primeiroNome.isEmpty ? 'Olá!' : 'Olá, $primeiroNome!',
+                              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Que bom te ver por aqui.',
+                              style: TextStyle(color: CoresAprendo.textoSuave),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
                   _CartaoContinuar(

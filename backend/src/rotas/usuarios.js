@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const pool = require('../config/banco');
 const { verificarToken } = require('../middlewares/autenticacao');
 const { registrarLog, removerEmailDosLogs } = require('../servicos/logs');
-const { validarNome, validarSenha } = require('../utils/validacoes');
+const { validarNome, validarSenha, validarAvatar } = require('../utils/validacoes');
 
 const router = express.Router();
 
@@ -12,7 +12,7 @@ const router = express.Router();
 router.get('/perfil', verificarToken, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, nome, email, perfil, criado_em FROM usuarios WHERE id = $1',
+      'SELECT id, nome, email, perfil, avatar, criado_em FROM usuarios WHERE id = $1',
       [req.usuario.id]
     );
 
@@ -40,7 +40,7 @@ router.put('/perfil', verificarToken, async (req, res) => {
   try {
     const result = await pool.query(
       `UPDATE usuarios SET nome = $1 WHERE id = $2
-       RETURNING id, nome, email, perfil, criado_em`,
+       RETURNING id, nome, email, perfil, avatar, criado_em`,
       [nome.trim(), req.usuario.id]
     );
     if (result.rows.length === 0) {
@@ -51,6 +51,29 @@ router.put('/perfil', verificarToken, async (req, res) => {
     res.json({ message: 'Perfil atualizado com sucesso!', usuario: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao atualizar perfil', detalhes: err.message });
+  }
+});
+
+// Troca do avatar (RF15): o aluno escolhe um dos ícones prontos do app.
+// Não há envio de foto, para não guardar imagem do rosto de alunos menores de idade.
+router.put('/perfil/avatar', verificarToken, async (req, res) => {
+  const avatar = (req.body || {}).avatar;
+  const erro = validarAvatar(avatar);
+  if (erro) {
+    return res.status(400).json({ error: erro });
+  }
+  try {
+    const result = await pool.query(
+      'UPDATE usuarios SET avatar = $1 WHERE id = $2 RETURNING avatar',
+      [avatar, req.usuario.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+    await registrarLog(req.usuario.id, 'edicao_avatar', 'Avatar alterado pelo próprio titular', req.ip, true);
+    res.json({ message: 'Avatar atualizado!', avatar: result.rows[0].avatar });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao atualizar o avatar', detalhes: err.message });
   }
 });
 

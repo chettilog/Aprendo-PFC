@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../api.dart';
+import '../componentes/avatar.dart';
 import '../componentes/cartoes.dart';
 import '../tema.dart';
 import 'tela_trilhas.dart';
 
 // ============================================================
-// RANKING ENTRE COLEGAS
-// Cada aluno tem um código no formato Nome#1234. Quem recebe o código de um colega
-// pode adicioná-lo e comparar o XP. O ranking mostra só o primeiro nome, o nível e o XP,
-// e o aluno pode deixar de aparecer no ranking dos outros a qualquer momento (LGPD).
-// Dados: GET /ranking, POST e DELETE /ranking/colegas, PUT /ranking/visibilidade.
+// RANKING
+// Dois rankings, escolhidos pelos botões do topo:
+//   - Colegas: cada aluno tem um código Nome#1234; quem recebe o código de um colega
+//     pode adicioná-lo e comparar o XP.
+//   - Geral: os 20 alunos com mais XP de todo o Aprendo, e a posição do próprio aluno.
+// Os dois mostram só o primeiro nome, o avatar, o nível e o XP, e o aluno pode deixar
+// de aparecer nos dois a qualquer momento (LGPD).
+// Dados: GET /ranking, GET /ranking/geral, POST e DELETE /ranking/colegas, PUT /ranking/visibilidade.
 // ============================================================
 class TelaRanking extends StatefulWidget {
   const TelaRanking({super.key});
@@ -21,6 +25,7 @@ class TelaRanking extends StatefulWidget {
 
 class _TelaRankingState extends State<TelaRanking> {
   late Future<Map<String, dynamic>> _futuro;
+  int _aba = 0; // 0 = Colegas, 1 = Geral
   final _codigoController = TextEditingController();
   bool _adicionando = false;
   String? _erroAdicionar;
@@ -104,8 +109,8 @@ class _TelaRankingState extends State<TelaRanking> {
       await apiPut('/ranking/visibilidade', {'aparecer': aparecer});
       if (mounted) {
         _avisar(aparecer
-            ? 'Você voltou a aparecer no ranking dos colegas.'
-            : 'Você não aparece mais no ranking dos colegas.');
+            ? 'Você voltou a aparecer nos rankings.'
+            : 'Você não aparece mais nos rankings.');
         _recarregar();
       }
     } catch (e) {
@@ -117,7 +122,33 @@ class _TelaRankingState extends State<TelaRanking> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Ranking')),
-      body: FutureBuilder<Map<String, dynamic>>(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<int>(
+                  segments: const [
+                    ButtonSegment(value: 0, label: Text('Colegas'), icon: Icon(Icons.group)),
+                    ButtonSegment(value: 1, label: Text('Geral'), icon: Icon(Icons.public)),
+                  ],
+                  selected: {_aba},
+                  onSelectionChanged: (escolha) => setState(() => _aba = escolha.first),
+                ),
+              ),
+            ),
+          ),
+          Expanded(child: _aba == 0 ? _rankingColegas() : const _RankingGeral()),
+        ],
+      ),
+    );
+  }
+
+  Widget _rankingColegas() {
+    return FutureBuilder<Map<String, dynamic>>(
         future: _futuro,
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) {
@@ -243,10 +274,10 @@ class _TelaRankingState extends State<TelaRanking> {
                     child: SwitchListTile(
                       value: aparecer,
                       onChanged: _alterarVisibilidade,
-                      title: const Text('Aparecer no ranking dos colegas'),
+                      title: const Text('Aparecer no ranking'),
                       subtitle: const Text(
-                        'Os colegas que tiverem o seu código veem só o seu primeiro nome, '
-                        'o seu nível e o seu XP. Desligue para não aparecer para ninguém.',
+                        'No ranking dos colegas e no ranking geral aparecem só o seu primeiro nome, '
+                        'o seu avatar, o seu nível e o seu XP. Desligue para não aparecer em nenhum dos dois.',
                       ),
                     ),
                   ),
@@ -255,7 +286,101 @@ class _TelaRankingState extends State<TelaRanking> {
             ),
           );
         },
-      ),
+    );
+  }
+}
+
+// Ranking geral: os 20 alunos com mais XP e, se o aluno estiver fora deles, a posição dele
+class _RankingGeral extends StatefulWidget {
+  const _RankingGeral();
+
+  @override
+  State<_RankingGeral> createState() => _RankingGeralState();
+}
+
+class _RankingGeralState extends State<_RankingGeral> {
+  late Future<Map<String, dynamic>> _futuro;
+
+  @override
+  void initState() {
+    super.initState();
+    _futuro = _carregar();
+  }
+
+  Future<Map<String, dynamic>> _carregar() async {
+    final dados = await apiGet('/ranking/geral');
+    return Map<String, dynamic>.from(dados as Map);
+  }
+
+  void _recarregar() => setState(() => _futuro = _carregar());
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _futuro,
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snap.hasError) {
+          return EstadoErro(erro: snap.error!, aoTentarDeNovo: _recarregar);
+        }
+        final dados = snap.data!;
+        final ranking = List<Map<String, dynamic>>.from(
+          (dados['ranking'] as List).map((p) => Map<String, dynamic>.from(p as Map)),
+        );
+        final minha = dados['minha_posicao'] == null
+            ? null
+            : Map<String, dynamic>.from(dados['minha_posicao'] as Map);
+        final total = (dados['total_participantes'] as num?)?.toInt() ?? 0;
+        final aparecer = dados['aparecer_no_ranking'] == true;
+        final souDoTop = ranking.any((p) => p['eu'] == true);
+
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                Secao(
+                  titulo: 'Ranking geral',
+                  subtitulo: 'Os ${ranking.length} alunos com mais XP, entre $total participantes',
+                  child: Column(
+                    children: [
+                      for (final pessoa in ranking) _LinhaRanking(pessoa: pessoa, aoRemover: null),
+                      if (ranking.isEmpty)
+                        const Text(
+                          'Ainda não há alunos no ranking geral.',
+                          style: TextStyle(color: CoresAprendo.textoSuave),
+                        ),
+                      // Fora do top 20: mostra a própria posição separada
+                      if (minha != null && !souDoTop) ...[
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 4),
+                          child: Icon(Icons.more_vert, color: CoresAprendo.textoSuave),
+                        ),
+                        _LinhaRanking(pessoa: minha, aoRemover: null),
+                      ],
+                    ],
+                  ),
+                ),
+                if (!aparecer) ...[
+                  const SizedBox(height: 16),
+                  const Card(
+                    child: ListTile(
+                      leading: Icon(Icons.visibility_off, color: CoresAprendo.textoSuave),
+                      title: Text('Você não aparece no ranking'),
+                      subtitle: Text(
+                        'Para entrar na disputa, ligue "Aparecer no ranking" na aba Colegas.',
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -294,6 +419,8 @@ class _LinhaRanking extends StatelessWidget {
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                   ),
           ),
+          const SizedBox(width: 8),
+          AvatarAprendo(indice: indiceDoAvatar(pessoa['avatar']), tamanho: 40),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

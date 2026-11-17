@@ -1,6 +1,8 @@
 // Testes das regras de XP (RF08) e das validações de entrada
 const { calcularNivel, xpDoResultado, xpAGanhar } = require('../src/servicos/xp');
-const { validarCadastro, validarNome, validarSenha, idValido, validarProducao } = require('../src/utils/validacoes');
+const {
+  validarCadastro, validarNome, validarSenha, idValido, validarProducao, validarAvatar, TOTAL_AVATARES,
+} = require('../src/utils/validacoes');
 
 describe('XP e nível', () => {
   test.each([[0, 1], [99, 1], [100, 2], [250, 3]])('%i XP -> nível %i', (xp, nivel) => {
@@ -65,5 +67,15 @@ describe('idValido e validarProducao', () => {
     expect(validarProducao('curta').erro).toMatch(/pelo menos/);
     expect(validarProducao('x'.repeat(3001)).erro).toMatch(/no máximo/);
     expect(validarProducao(`  ${'a'.repeat(50)}  `).texto).toHaveLength(50);
+  });
+});
+
+describe('validarAvatar', () => {
+  test('aceita de 0 a 11', () => {
+    expect(TOTAL_AVATARES).toBe(12);
+    for (let i = 0; i < TOTAL_AVATARES; i++) expect(validarAvatar(i)).toBeNull();
+  });
+  test('recusa fora da faixa, decimal e texto', () => {
+    for (const v of [-1, 12, 1.5, '1', null, undefined]) expect(validarAvatar(v)).toMatch(/avatar/);
   });
 });

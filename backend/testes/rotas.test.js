@@ -157,6 +157,25 @@ describe('editar perfil (RF15)', () => {
     const params = pool.query.mock.calls.find(c => c[0].includes('UPDATE usuarios SET nome'))[1];
     expect(params).toEqual(['Ana Clara', 7]);
   });
+  test('troca o avatar', async () => {
+    banco([['SET avatar', { rows: [{ avatar: 7 }] }]]);
+    const r = await request(app).put('/perfil/avatar').set(auth).send({ avatar: 7 });
+    expect(r.status).toBe(200);
+    expect(r.body.avatar).toBe(7);
+    const params = pool.query.mock.calls.find(c => c[0].includes('SET avatar'))[1];
+    expect(params).toEqual([7, 7]);
+  });
+  test('avatar inválido: 400', async () => {
+    for (const avatar of [-1, 12, 2.5, '3', null, undefined]) {
+      expect((await request(app).put('/perfil/avatar').set(auth).send({ avatar })).status).toBe(400);
+    }
+  });
+  test('avatar: usuário inexistente 404, erro 500', async () => {
+    banco([]);
+    expect((await request(app).put('/perfil/avatar').set(auth).send({ avatar: 1 })).status).toBe(404);
+    banco([['SET avatar', new Error('fora do ar')]]);
+    expect((await request(app).put('/perfil/avatar').set(auth).send({ avatar: 1 })).status).toBe(500);
+  });
   test('nome inválido: 400', async () => {
     expect((await request(app).put('/perfil').set(auth).send({ nome: 'A' })).status).toBe(400);
     expect((await request(app).put('/perfil').set(auth).send({})).status).toBe(400);
@@ -340,7 +359,7 @@ describe('produção, avaliação e XP (RF06, RF07 e RF08)', () => {
 describe('dashboard (RF13)', () => {
   test('calcula nível, percentual, dias seguidos e próxima aula', async () => {
     banco([
-      ['SELECT nome FROM usuarios', { rows: [{ nome: 'Ana' }] }],
+      ['SELECT nome, avatar FROM usuarios', { rows: [{ nome: 'Ana', avatar: 4 }] }],
       ['FROM movimentacoes_xp WHERE usuario_id = $1', { rows: [{ total: 150 }] }],
       ['AS nota_media', { rows: [{ total: 4, nota_media: 72 }] }],
       ['FROM trilhas t', { rows: [{ id: 1, total_aulas: 4, aulas_concluidas: 1 }] }],
@@ -358,7 +377,7 @@ describe('dashboard (RF13)', () => {
     const r = await request(app).get('/dashboard').set(auth);
     expect(r.status).toBe(200);
     expect(r.body.dashboard).toMatchObject({
-      nome: 'Ana', xp_total: 150, nivel: 2, xp_no_nivel: 50, xp_para_proximo_nivel: 50,
+      nome: 'Ana', avatar: 4, xp_total: 150, nivel: 2, xp_no_nivel: 50, xp_para_proximo_nivel: 50,
       producoes_enviadas: 4, nota_media: 72, dias_seguidos: 2, aulas_concluidas: 1,
     });
     expect(r.body.dashboard.trilhas[0].percentual).toBe(25);
@@ -377,7 +396,7 @@ describe('dashboard (RF13)', () => {
   });
 
   test('erro no banco: 500', async () => {
-    banco([['SELECT nome FROM usuarios', new Error('sem conexão')]]);
+    banco([['SELECT nome, avatar FROM usuarios', new Error('sem conexão')]]);
     expect((await request(app).get('/dashboard').set(auth)).status).toBe(500);
   });
 });

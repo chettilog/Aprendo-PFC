@@ -6,8 +6,9 @@ const request = require('supertest');
 const jwt = require('jsonwebtoken');
 const app = require('../src/app');
 const {
-  primeiroNome, formatarCodigo, interpretarCodigo, nomeConfere, montarRanking,
+  primeiroNome, formatarCodigo, interpretarCodigo, nomeConfere, montarRanking, montarRankingGeral,
 } = require('../src/servicos/ranking');
+const { calcularNivel } = require('../src/servicos/xp');
 
 const auth = { Authorization: `Bearer ${jwt.sign({ id: 7 }, process.env.JWT_SECRET)}` };
 
@@ -83,8 +84,9 @@ describe('rotas do ranking', () => {
     expect(r.status).toBe(200);
     expect(r.body).toMatchObject({ meu_codigo: 'Ana#2222', aparecer_no_ranking: true, total_colegas: 1 });
     expect(r.body.ranking.map(p => [p.posicao, p.nome, p.nivel, p.eu])).toEqual([[1, 'Bruno', 3, false], [2, 'Ana', 2, true]]);
-    // nenhum dado além de nome, código, nível e XP
-    expect(Object.keys(r.body.ranking[0]).sort()).toEqual(['codigo', 'eu', 'nivel', 'nome', 'posicao', 'xp_total']);
+    // nenhum dado além de nome, código, avatar, nível e XP
+    expect(Object.keys(r.body.ranking[0]).sort())
+      .toEqual(['avatar', 'codigo', 'eu', 'nivel', 'nome', 'posicao', 'xp_total']);
   });
   test('GET /ranking sem token: 401; usuário inexistente: 404; erro: 500', async () => {
     expect((await request(app).get('/ranking')).status).toBe(401);
@@ -159,5 +161,60 @@ describe('rotas do ranking', () => {
     expect((await request(app).put('/ranking/visibilidade').set(auth).send({ aparecer: 'sim' })).status).toBe(400);
     banco([['SET aparecer_no_ranking', new Error('fora do ar')]]);
     expect((await request(app).put('/ranking/visibilidade').set(auth).send({ aparecer: true })).status).toBe(500);
+  });
+});
+
+describe('ranking geral', () => {
+  // Linhas como o banco devolve: já ordenadas, com posição (RANK), linha (ROW_NUMBER) e total
+  function linhas(quantas, extra = [], total = quantas + extra.length) {
+    const lista = [];
+    for (let i = 1; i <= quantas; i++) {
+      lista.push({ id: 100 + i, nome: `Aluno${i} Silva`, avatar: i % 12, xp_total: 1000 - i * 10, posicao: i, linha: i, total });
+    }
+    return [...lista, ...extra];
+  }
+
+  test('montarRankingGeral corta nos 20 primeiros e mostra a minha posição fora do top', () => {
+    const eu = { id: 7, nome: 'Ana Lima', avatar: 3, xp_total: 40, posicao: 25, linha: 25, total: 25 };
+    const r = montarRankingGeral(linhas(20, [eu], 25), 7, calcularNivel);
+    expect(r.ranking).toHaveLength(20);
+    expect(r.ranking.some(p => p.eu)).toBe(false);
+    expect(r.minha_posicao).toEqual({ posicao: 25, nome: 'Ana', avatar: 3, nivel: 1, xp_total: 40, eu: true });
+    expect(r.total_participantes).toBe(25);
+  });
+  test('montarRankingGeral sem participantes', () => {
+    expect(montarRankingGeral([], 7, calcularNivel)).toEqual({ ranking: [], minha_posicao: null, total_participantes: 0 });
+  });
+
+  test('GET /ranking/geral mostra só primeiro nome, avatar, nível e XP (sem o código)', async () => {
+    banco([
+      ['aparecer_no_ranking FROM usuarios', { rows: [{ aparecer_no_ranking: true }] }],
+      ['WITH participantes', { rows: [
+        { id: 3, nome: 'Bruno Reis', avatar: 5, xp_total: 300, posicao: 1, linha: 1, total: 2 },
+        { id: 7, nome: 'Ana Lima', avatar: 2, xp_total: 150, posicao: 2, linha: 2, total: 2 },
+      ] }],
+    ]);
+    const r = await request(app).get('/ranking/geral').set(auth);
+    expect(r.status).toBe(200);
+    expect(r.body.ranking.map(p => [p.posicao, p.nome, p.nivel, p.eu])).toEqual([[1, 'Bruno', 4, false], [2, 'Ana', 2, true]]);
+    expect(Object.keys(r.body.ranking[0]).sort()).toEqual(['avatar', 'eu', 'nivel', 'nome', 'posicao', 'xp_total']);
+    expect(r.body.minha_posicao.posicao).toBe(2);
+    expect(r.body.aparecer_no_ranking).toBe(true);
+  });
+  test('GET /ranking/geral: só alunos que aceitaram aparecer, com empate pela mesma posição', async () => {
+    banco([['aparecer_no_ranking FROM usuarios', { rows: [{ aparecer_no_ranking: false }] }]]);
+    const r = await request(app).get('/ranking/geral').set(auth);
+    expect(r.body.minha_posicao).toBeNull();
+    const [sql, params] = pool.query.mock.calls[1];
+    expect(sql).toContain("u.perfil = 'aluno' AND u.aparecer_no_ranking = true");
+    expect(sql).toContain('RANK() OVER');
+    expect(params).toEqual([7, 20]);
+  });
+  test('GET /ranking/geral: sem token 401, usuário inexistente 404, erro 500', async () => {
+    expect((await request(app).get('/ranking/geral')).status).toBe(401);
+    banco([]);
+    expect((await request(app).get('/ranking/geral').set(auth)).status).toBe(404);
+    banco([['aparecer_no_ranking FROM usuarios', new Error('fora do ar')]]);
+    expect((await request(app).get('/ranking/geral').set(auth)).status).toBe(500);
   });
 });

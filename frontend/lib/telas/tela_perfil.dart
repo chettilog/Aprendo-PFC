@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api.dart';
+import '../componentes/avatar.dart';
 import '../tema.dart';
 import 'tela_busca_wiki.dart';
 import 'tela_documentos.dart';
@@ -93,6 +94,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
         builder: (context) => TelaEditarPerfil(
           nomeAtual: '${_dadosUsuario!['nome']}',
           email: '${_dadosUsuario!['email']}',
+          avatarAtual: indiceDoAvatar(_dadosUsuario!['avatar']),
         ),
       ),
     );
@@ -208,7 +210,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.account_circle, size: 100, color: CoresAprendo.turquesa),
+                          AvatarAprendo(indice: indiceDoAvatar(_dadosUsuario!['avatar']), tamanho: 100),
                           const SizedBox(height: 24),
                           Text(
                             'Bem-vindo, ${_dadosUsuario!['nome']}!',

@@ -47,6 +47,7 @@ function montarRanking(participantes, meuId) {
       posicao,
       nome: primeiroNome(p.nome),
       codigo: formatarCodigo(p.nome, p.codigo),
+      avatar: p.avatar ?? 0,
       nivel: p.nivel,
       xp_total: p.xp_total,
       eu: p.id === meuId,
@@ -54,6 +55,31 @@ function montarRanking(participantes, meuId) {
   });
 }
 
+// Quantos alunos aparecem no ranking geral
+const TAMANHO_RANKING_GERAL = 20;
+
+// Monta o ranking geral a partir das linhas do banco (já ordenadas e com a posição).
+// Mostra só primeiro nome, avatar, nível e XP: o código # não aparece, para que
+// ninguém adicione um aluno como colega sem ter recebido o código dele.
+function montarRankingGeral(linhas, meuId, calcularNivel) {
+  const formatar = (l) => ({
+    posicao: l.posicao,
+    nome: primeiroNome(l.nome),
+    avatar: l.avatar ?? 0,
+    nivel: calcularNivel(l.xp_total),
+    xp_total: l.xp_total,
+    eu: l.id === meuId,
+  });
+  const ranking = linhas.filter(l => l.linha <= TAMANHO_RANKING_GERAL).map(formatar);
+  const minha = linhas.find(l => l.id === meuId);
+  return {
+    ranking,
+    minha_posicao: minha ? formatar(minha) : null,
+    total_participantes: linhas[0]?.total ?? 0,
+  };
+}
+
 module.exports = {
+  TAMANHO_RANKING_GERAL, montarRankingGeral,
   LIMITE_DE_COLEGAS, primeiroNome, formatarCodigo, interpretarCodigo, nomeConfere, montarRanking,
 };

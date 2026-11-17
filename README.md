@@ -30,7 +30,8 @@ O servidor da API usa um plano gratuito e é suspenso quando fica sem acessos; a
 - Senhas criptografadas com bcrypt e login com token JWT (expiração de 2 horas)
 - Perfis de usuário (`aluno` e `admin`), com permissões verificadas no backend a cada requisição
 - Logout com remoção do token
-- Edição do perfil: troca do nome e troca da senha, que exige a senha atual (o e-mail não é editável)
+- Edição do perfil: escolha do avatar (12 ícones prontos), troca do nome e troca da senha, que exige a senha atual (o e-mail não é editável)
+- O avatar aparece no Perfil, na saudação do Início e nos rankings; não há envio de foto
 
 **Trilhas e aulas**
 - Três trilhas de exemplo: Matemática (Fundamentos de Funções), História (Revolução Industrial) e Geografia (Clima e Tempo), com 5 aulas cada, divididas em dois níveis
@@ -74,11 +75,12 @@ O servidor da API usa um plano gratuito e é suspenso quando fica sem acessos; a
 - Cada registro guarda ação, usuário, IP, data/hora e resultado, sem armazenar senhas ou tokens
 - Consulta dos logs pela rota `GET /logs`, restrita ao perfil admin
 
-**Ranking entre colegas**
+**Ranking (aba com dois botões: Colegas e Geral)**
 - Cada conta tem um código no formato `Nome#1234` (primeiro nome + número de 4 dígitos sorteado no cadastro)
-- O aluno adiciona colegas digitando o código completo e compara o XP em um ranking só entre eles
-- O ranking mostra apenas primeiro nome, nível e XP; não há lista pública de alunos
-- Opção "Aparecer no ranking dos colegas", que pode ser desligada a qualquer momento
+- **Colegas:** o aluno adiciona colegas digitando o código completo e compara o XP em um ranking só entre eles
+- **Geral:** os 20 alunos com mais XP de toda a plataforma; quem está fora do top 20 vê a própria posição embaixo. Empates ficam na mesma posição, e contas de administrador não participam
+- Os dois rankings mostram apenas primeiro nome, avatar, nível e XP; o código não aparece no ranking geral
+- Opção "Aparecer no ranking", que pode ser desligada a qualquer momento e tira o aluno dos dois rankings
 
 **LGPD**
 - Aceite obrigatório dos Termos de Uso e da Política de Privacidade no cadastro, com registro da versão e da data do aceite
@@ -90,7 +92,8 @@ O servidor da API usa um plano gratuito e é suspenso quando fica sem acessos; a
 - Logs apagados automaticamente depois de 6 meses (prazo do Marco Civil da Internet)
 - O token de login guarda apenas o id do usuário
 - Exclusão de conta pelo próprio titular, com confirmação; as explicações e o XP são removidos, e os logs que restam deixam de identificar a pessoa
-- Ranking com exposição mínima (primeiro nome, nível e XP), só para quem recebeu o código, e com opção de sair
+- Rankings com exposição mínima (primeiro nome, avatar, nível e XP) e opção de sair a qualquer momento
+- Avatar escolhido entre ícones prontos: o sistema não recebe nem guarda fotos de alunos, muitos deles menores de idade
 
 **Integração com API externa**
 - Consulta à Wikipedia via proxy no backend (o IP do usuário não é exposto ao serviço externo)
@@ -140,6 +143,7 @@ aprendo/
 │   │   ├── tema.dart          # Cores e tema visual
 │   │   ├── validacoes.dart    # Regras de validação dos formulários
 │   │   ├── componentes/
+│   │   │   ├── avatar.dart      # Os 12 avatares do perfil e a grade de escolha
 │   │   │   ├── campo_senha.dart # Campo de senha com botão de mostrar/ocultar
 │   │   │   └── cartoes.dart     # Cartões e indicadores usados por várias telas
 │   │   └── telas/
@@ -148,7 +152,7 @@ aprendo/
 │   │       ├── tela_inicio.dart     # Navegação (Início, Trilhas, Dashboard, Ranking, Perfil)
 │   │       ├── tela_painel.dart     # Aba Início
 │   │       ├── tela_dashboard.dart  # Aba Dashboard (indicadores e gráficos)
-│   │       ├── tela_ranking.dart    # Aba Ranking (código e colegas)
+│   │       ├── tela_ranking.dart    # Aba Ranking (colegas e geral)
 │   │       ├── tela_respostas.dart  # Respostas anteriores de uma aula
 │   │       ├── tela_editar_perfil.dart # Editar nome e trocar senha
 │   │       ├── tela_trilhas.dart    # Trilhas e caminho de aulas (com os níveis)
@@ -172,6 +176,7 @@ aprendo/
 | GET | `/politica` | Público | Política de Privacidade |
 | GET | `/perfil` | JWT | Dados do usuário logado |
 | PUT | `/perfil` | JWT | Altera o nome do usuário logado (RF15) |
+| PUT | `/perfil/avatar` | JWT | Troca o avatar (número de 0 a 11) (RF15) |
 | PUT | `/perfil/senha` | JWT | Troca a senha, exigindo a senha atual (RF15) |
 | DELETE | `/minha-conta` | JWT | Exclui a conta do titular |
 | GET | `/logs` | JWT + admin | Logs de auditoria |
@@ -184,9 +189,10 @@ aprendo/
 | GET | `/dashboard` | JWT | Resumo da aba Início (próxima aula, nível, últimas explicações) |
 | GET | `/estatisticas` | JWT | Indicadores e dados dos gráficos da aba Dashboard |
 | GET | `/ranking` | JWT | Código do aluno e ranking entre ele e os colegas adicionados |
+| GET | `/ranking/geral` | JWT | Os 20 alunos com mais XP e a posição do próprio aluno |
 | POST | `/ranking/colegas` | JWT | Adiciona um colega pelo código `Nome#1234` |
 | DELETE | `/ranking/colegas/:codigo` | JWT | Remove um colega do ranking |
-| PUT | `/ranking/visibilidade` | JWT | Liga ou desliga "aparecer no ranking dos colegas" |
+| PUT | `/ranking/visibilidade` | JWT | Liga ou desliga "aparecer no ranking" (colegas e geral) |
 
 ## Como rodar o projeto
 
@@ -235,6 +241,7 @@ psql -U postgres -d aprendo_db -f sql/07-lgpd-logs.sql
 psql -U postgres -d aprendo_db -f sql/08-aulas-resumidas.sql
 psql -U postgres -d aprendo_db -f sql/09-ranking.sql
 psql -U postgres -d aprendo_db -f sql/10-niveis-trilha.sql
+psql -U postgres -d aprendo_db -f sql/11-avatar-ranking-geral.sql
 ```
 
 O conteúdo das aulas (título, texto, palavras-chave e resposta de referência) é cadastrado por esses scripts, direto na tabela `aulas`. Não há tela de cadastro de aulas no app.

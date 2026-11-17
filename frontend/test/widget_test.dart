@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:aprendo_frontend/componentes/avatar.dart';
 import 'package:aprendo_frontend/main.dart';
 import 'package:aprendo_frontend/telas/tela_cadastro.dart';
 import 'package:aprendo_frontend/telas/tela_editar_perfil.dart';
@@ -88,9 +89,17 @@ void main() {
 
   testWidgets('Editar perfil mostra o nome, bloqueia o e-mail e pede a senha atual',
       (WidgetTester tester) async {
+    // Tela alta, para todos os cartões caberem sem rolar
+    tester.view.physicalSize = const Size(1000, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(const MaterialApp(
-      home: TelaEditarPerfil(nomeAtual: 'Ana', email: 'ana@teste.com'),
+      home: TelaEditarPerfil(nomeAtual: 'Ana', email: 'ana@teste.com', avatarAtual: 3),
     ));
+
+    // 12 opções de avatar + o avatar atual no topo do cartão
+    expect(find.byType(EscolhaDeAvatar), findsOneWidget);
+    expect(find.byType(AvatarAprendo), findsNWidgets(opcoesDeAvatar.length + 1));
 
     expect(find.widgetWithText(TextFormField, 'Ana'), findsOneWidget);
     final email = tester.widget<TextField>(find.widgetWithText(TextField, 'E-mail'));
@@ -105,6 +114,26 @@ void main() {
     expect(iconeDaMateria('História'), Icons.account_balance_rounded);
     expect(iconeDaMateria('Geografia'), Icons.public_rounded);
     expect(iconeDaMateria('Outra matéria'), Icons.menu_book_rounded);
+  });
+
+  test('indiceDoAvatar aceita só de 0 a 11', () {
+    expect(opcoesDeAvatar.length, 12);
+    expect(indiceDoAvatar(7), 7);
+    expect(indiceDoAvatar(12), 0);
+    expect(indiceDoAvatar(-1), 0);
+    expect(indiceDoAvatar(null), 0);
+    expect(indiceDoAvatar('5'), 0);
+  });
+
+  testWidgets('Tocar em um avatar avisa qual foi escolhido', (WidgetTester tester) async {
+    int? escolhido;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: EscolhaDeAvatar(selecionado: 0, aoEscolher: (i) => escolhido = i),
+      ),
+    ));
+    await tester.tap(find.byKey(const ValueKey('avatar_4')));
+    expect(escolhido, 4);
   });
 
   test('validarConfirmacaoSenha', () {
