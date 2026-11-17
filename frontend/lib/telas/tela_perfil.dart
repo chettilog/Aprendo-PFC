@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api.dart';
 import '../componentes/avatar.dart';
-import '../tema.dart';
 import 'tela_busca_wiki.dart';
 import 'tela_documentos.dart';
 import 'tela_editar_perfil.dart';
