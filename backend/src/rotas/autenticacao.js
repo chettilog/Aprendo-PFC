@@ -86,7 +86,7 @@ router.post('/login', async (req, res) => {
     }
 
     const result = await pool.query(
-      'SELECT id, nome, email, senha FROM usuarios WHERE email = $1',
+      'SELECT id, nome, email, senha, perfil FROM usuarios WHERE email = $1',
       [email]
     );
 
@@ -122,6 +122,8 @@ router.post('/login', async (req, res) => {
         id: usuario.id,
         nome: usuario.nome,
         email: usuario.email,
+        // Usado pelo app só para mostrar a aba Logs; a permissão é conferida no servidor
+        perfil: usuario.perfil,
       },
     });
   } catch (err) {

@@ -103,9 +103,10 @@ describe('login (RF02)', () => {
   });
   test('login certo devolve um token JWT', async () => {
     const hash = await bcrypt.hash('123456', 4);
-    banco([['FROM usuarios WHERE email', { rows: [{ id: 1, nome: 'Ana', email: 'a@a.com', senha: hash }] }]]);
+    banco([['FROM usuarios WHERE email', { rows: [{ id: 1, nome: 'Ana', email: 'a@a.com', senha: hash, perfil: 'aluno' }] }]]);
     const r = await request(app).post('/login').send({ email: 'a@a.com', senha: '123456' });
     expect(r.status).toBe(200);
+    expect(r.body.usuario).toEqual({ id: 1, nome: 'Ana', email: 'a@a.com', perfil: 'aluno' }); // sem a senha
     const conteudoDoToken = jwt.verify(r.body.token, process.env.JWT_SECRET);
     expect(conteudoDoToken.id).toBe(1);
     expect(conteudoDoToken).not.toHaveProperty('email'); // nenhum dado pessoal no token
@@ -129,11 +130,55 @@ describe('token e perfil de acesso', () => {
     banco([['SELECT perfil', { rows: [{ perfil: 'aluno' }] }]]);
     expect((await request(app).get('/logs').set(auth)).status).toBe(403);
   });
-  test('admin acessa /logs', async () => {
+  test('admin acessa /logs e a consulta fica registrada', async () => {
     banco([['SELECT perfil', { rows: [{ perfil: 'admin' }] }], ['FROM logs', { rows: [{ id: 1 }] }]]);
     const r = await request(app).get('/logs').set(auth);
     expect(r.status).toBe(200);
     expect(r.body.logs).toHaveLength(1);
+    const consulta = pool.query.mock.calls.find(c => c[0].includes('FROM logs'))[0];
+    expect(consulta).not.toContain('sucesso = false');
+    const log = pool.query.mock.calls.find(c => c[0].includes('INSERT INTO logs'))[1];
+    expect(log[1]).toBe('consulta_logs');
+  });
+  test('admin filtra só as falhas', async () => {
+    banco([['SELECT perfil', { rows: [{ perfil: 'admin' }] }], ['FROM logs', { rows: [] }]]);
+    expect((await request(app).get('/logs?falhas=true').set(auth)).status).toBe(200);
+    const consulta = pool.query.mock.calls.find(c => c[0].includes('FROM logs'))[0];
+    expect(consulta).toContain('WHERE l.sucesso = false');
+  });
+  test('visão geral: só admin, só números e só explicações de alunos', async () => {
+    banco([['SELECT perfil', { rows: [{ perfil: 'aluno' }] }]]);
+    expect((await request(app).get('/admin/visao-geral').set(auth)).status).toBe(403);
+
+    banco([
+      ['SELECT perfil', { rows: [{ perfil: 'admin' }] }],
+      ['AS novos_7_dias', { rows: [{ total: 30, novos_7_dias: 4, ativos_7_dias: 12 }] }],
+      ['AS ultimos_7_dias', { rows: [{ total: 120, ultimos_7_dias: 40, nota_media: 71 }] }],
+      ['GROUP BY f.resultado', { rows: [{ resultado: 'suficiente', total: 80 }, { resultado: 'parcial', total: 25 }] }],
+      ['GROUP BY f.avaliador', { rows: [{ avaliador: 'ia', total: 100 }, { avaliador: 'regras', total: 5 }] }],
+      ['AS taxa_acerto', { rows: [{ id: 2, titulo: 'Domínio', trilha_nome: 'Funções', tentativas: 9, nota_media: 48, taxa_acerto: 22 }] }],
+    ]);
+    const r = await request(app).get('/admin/visao-geral').set(auth);
+    expect(r.status).toBe(200);
+    const v = r.body.visao_geral;
+    expect(v.alunos.total).toBe(30);
+    expect(v.producoes.nota_media).toBe(71);
+    // resultados e avaliadores sem registro aparecem com zero
+    expect(v.resultados).toEqual({ suficiente: 80, parcial: 25, insuficiente: 0 });
+    expect(v.avaliadores).toEqual({ ia: 100, regras: 5, filtro: 0 });
+    expect(v.aulas_mais_dificeis[0].taxa_acerto).toBe(22);
+    // nenhuma consulta da visão geral busca nome ou e-mail de aluno
+    const consultas = pool.query.mock.calls.map(c => c[0]).filter(sql => !sql.includes('SELECT perfil'));
+    expect(consultas.some(sql => /u\.nome|email/.test(sql))).toBe(false);
+    expect(consultas.filter(sql => sql.includes("perfil = 'aluno'"))).toHaveLength(5);
+  });
+  test('visão geral com erro no banco: 500', async () => {
+    banco([['SELECT perfil', { rows: [{ perfil: 'admin' }] }], ['AS novos_7_dias', new Error('fora do ar')]]);
+    expect((await request(app).get('/admin/visao-geral').set(auth)).status).toBe(500);
+  });
+  test('/logs com erro no banco: 500', async () => {
+    banco([['SELECT perfil', { rows: [{ perfil: 'admin' }] }], ['FROM logs', new Error('fora do ar')]]);
+    expect((await request(app).get('/logs').set(auth)).status).toBe(500);
   });
   test('excluir a própria conta (LGPD)', async () => {
     banco([['SELECT email', { rows: [{ email: 'a@a.com' }] }]]);

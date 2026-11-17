@@ -167,6 +167,18 @@ Authorization: Bearer {{loginAluno.response.body.token}}
 GET {{api}}/logs
 Authorization: Bearer {{loginAdmin.response.body.token}}
 
+### So as falhas dos logs, como admin - esperado 200
+GET {{api}}/logs?falhas=true
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+### Visao geral da plataforma, como admin - esperado 200
+GET {{api}}/admin/visao-geral
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+### Visao geral como aluno - esperado 403
+GET {{api}}/admin/visao-geral
+Authorization: Bearer {{loginAluno.response.body.token}}
+
 ### ===================== TERMOS E POLITICA (RF20) =====================
 
 ### Termos de Uso (publico) - esperado 200

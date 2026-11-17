@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'tela_admin.dart';
+import 'tela_dashboard.dart';
+import 'tela_painel.dart';
 import 'tela_perfil.dart';
 import 'tela_ranking.dart';
 import 'tela_trilhas.dart';
-import 'tela_dashboard.dart';
-import 'tela_painel.dart';
 
 // ============================================================
-// TELA INICIAL: barra de navegação com Início, Trilhas, Dashboard, Ranking e Perfil
+// TELA INICIAL: barra de navegação com Início, Trilhas, Dashboard, Ranking e Perfil.
+// Contas admin também veem a aba Admin (visão geral e logs).
 // ============================================================
 class TelaInicio extends StatefulWidget {
   const TelaInicio({super.key});
@@ -17,6 +20,20 @@ class TelaInicio extends StatefulWidget {
 
 class _TelaInicioState extends State<TelaInicio> {
   int _aba = 0;
+  bool _admin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _verificarPerfil();
+  }
+
+  // O perfil foi salvo no login. Ele só esconde ou mostra a aba:
+  // se alguém forçar a aba, o servidor responde 403 do mesmo jeito.
+  Future<void> _verificarPerfil() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) setState(() => _admin = prefs.getString('perfil_usuario') == 'admin');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +43,8 @@ class _TelaInicioState extends State<TelaInicio> {
       1 => const TelaTrilhas(),
       2 => const TelaDashboard(),
       3 => const TelaRanking(),
-      _ => const TelaPerfil(),
+      4 => const TelaPerfil(),
+      _ => const TelaAdmin(),
     };
 
     return Scaffold(
@@ -34,35 +52,40 @@ class _TelaInicioState extends State<TelaInicio> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _aba,
         onDestinationSelected: (indice) => setState(() => _aba = indice),
-        destinations: const [
-          NavigationDestination(
+        destinations: [
+          const NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
             label: 'Início',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.route_outlined),
             selectedIcon: Icon(Icons.route),
             label: 'Trilhas',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.insights_outlined),
             selectedIcon: Icon(Icons.insights),
             label: 'Dashboard',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.emoji_events_outlined),
             selectedIcon: Icon(Icons.emoji_events),
             label: 'Ranking',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
             label: 'Perfil',
           ),
+          if (_admin)
+            const NavigationDestination(
+              icon: Icon(Icons.admin_panel_settings_outlined),
+              selectedIcon: Icon(Icons.admin_panel_settings),
+              label: 'Admin',
+            ),
         ],
       ),
     );
   }
 }
-

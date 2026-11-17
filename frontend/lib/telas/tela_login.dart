@@ -53,6 +53,8 @@ class _TelaLoginState extends State<TelaLogin> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', data['token']);
         await prefs.setString('nome_usuario', data['usuario']['nome']);
+        // Só decide se a aba Admin aparece; o servidor confere a permissão de novo em cada rota
+        await prefs.setString('perfil_usuario', '${data['usuario']['perfil'] ?? 'aluno'}');
 
         // Navega pra tela de perfil
         if (mounted) {

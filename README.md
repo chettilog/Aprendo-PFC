@@ -73,7 +73,9 @@ O servidor da API usa um plano gratuito e é suspenso quando fica sem acessos; a
 **Auditoria**
 - Registro de ações na tabela `logs`: cadastro, login (sucesso e falha), acesso ao perfil, exclusão de conta, consultas externas e acessos negados
 - Cada registro guarda ação, usuário, IP, data/hora e resultado, sem armazenar senhas ou tokens
-- Consulta dos logs pela rota `GET /logs`, restrita ao perfil admin
+- Aba **Admin**, que só aparece para contas admin (a permissão é conferida de novo no servidor em cada rota):
+  - **Visão geral:** alunos cadastrados e ativos na semana, explicações enviadas, nota média, resultados das correções, quem corrigiu (IA, palavras-chave ou filtro) e as 5 aulas com a menor nota média. Só números somados, sem dados de nenhum aluno, e contando apenas explicações de alunos
+  - **Logs:** os 100 registros de auditoria mais recentes, com filtro "Só falhas". A própria consulta aos logs também é registrada
 
 **Ranking (aba com dois botões: Colegas e Geral)**
 - Cada conta tem um código no formato `Nome#1234` (primeiro nome + número de 4 dígitos sorteado no cadastro)
@@ -119,7 +121,7 @@ aprendo/
 │   │   │   ├── dashboard.js     # GET /dashboard (resumo da aba Início)
 │   │   │   ├── estatisticas.js  # GET /estatisticas (gráficos da aba Dashboard)
 │   │   │   ├── ranking.js       # ranking entre colegas
-│   │   │   ├── admin.js         # GET /logs
+│   │   │   ├── admin.js         # GET /logs e GET /admin/visao-geral
 │   │   │   ├── documentos.js    # termos e política
 │   │   │   ├── wiki.js          # consulta à Wikipedia
 │   │   │   └── status.js        # GET / e GET /test-db
@@ -149,7 +151,8 @@ aprendo/
 │   │   └── telas/
 │   │       ├── tela_login.dart
 │   │       ├── tela_cadastro.dart
-│   │       ├── tela_inicio.dart     # Navegação (Início, Trilhas, Dashboard, Ranking, Perfil)
+│   │       ├── tela_inicio.dart     # Navegação (Início, Trilhas, Dashboard, Ranking, Perfil e Admin)
+│   │       ├── tela_admin.dart      # Aba Admin (visão geral e logs)
 │   │       ├── tela_painel.dart     # Aba Início
 │   │       ├── tela_dashboard.dart  # Aba Dashboard (indicadores e gráficos)
 │   │       ├── tela_ranking.dart    # Aba Ranking (colegas e geral)
@@ -179,7 +182,8 @@ aprendo/
 | PUT | `/perfil/avatar` | JWT | Troca o avatar (número de 0 a 11) (RF15) |
 | PUT | `/perfil/senha` | JWT | Troca a senha, exigindo a senha atual (RF15) |
 | DELETE | `/minha-conta` | JWT | Exclui a conta do titular |
-| GET | `/logs` | JWT + admin | Logs de auditoria |
+| GET | `/logs` | JWT + admin | Os 100 logs de auditoria mais recentes (`?falhas=true` traz só as falhas) |
+| GET | `/admin/visao-geral` | JWT + admin | Números da plataforma, sem dados pessoais |
 | GET | `/wiki/:topico` | JWT | Consulta à Wikipedia |
 | GET | `/trilhas` | JWT | Lista as trilhas ativas |
 | GET | `/trilhas/:id/aulas` | JWT | Aulas da trilha, com a situação (concluída, parcial) e a melhor nota do aluno |

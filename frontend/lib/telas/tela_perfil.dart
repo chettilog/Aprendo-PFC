@@ -107,6 +107,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
     await prefs.remove('nome_usuario');
+    await prefs.remove('perfil_usuario');
 
     if (mounted) {
       Navigator.pushReplacement(
@@ -157,6 +158,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
         // Limpa o token e volta pra tela de login
         await prefs.remove('token');
         await prefs.remove('nome_usuario');
+        await prefs.remove('perfil_usuario');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

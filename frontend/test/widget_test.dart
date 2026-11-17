@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aprendo_frontend/componentes/avatar.dart';
 import 'package:aprendo_frontend/main.dart';
+import 'package:aprendo_frontend/telas/tela_admin.dart';
 import 'package:aprendo_frontend/telas/tela_cadastro.dart';
 import 'package:aprendo_frontend/telas/tela_editar_perfil.dart';
 import 'package:aprendo_frontend/telas/tela_trilhas.dart';
@@ -134,6 +135,12 @@ void main() {
     ));
     await tester.tap(find.byKey(const ValueKey('avatar_4')));
     expect(escolhido, 4);
+  });
+
+  test('A aba Admin mostra o nome amigável de cada ação dos logs', () {
+    expect(nomeDaAcao('login_falha'), 'Login recusado');
+    expect(nomeDaAcao('consulta_logs'), 'Consulta aos logs (admin)');
+    expect(nomeDaAcao('acao_nova'), 'acao_nova'); // ação desconhecida aparece como veio
   });
 
   test('validarConfirmacaoSenha', () {
