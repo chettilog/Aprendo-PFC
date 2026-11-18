@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api.dart';
 import '../componentes/avatar.dart';
+import '../componentes/campo_senha.dart';
 import 'tela_busca_wiki.dart';
 import 'tela_documentos.dart';
 import 'tela_editar_perfil.dart';
@@ -117,69 +118,73 @@ class _TelaPerfilState extends State<TelaPerfil> {
     }
   }
     Future<void> _excluirConta() async {
-    // Diálogo de confirmação (LGPD: evita exclusão acidental)
-    final confirmou = await showDialog<bool>(
+    // Diálogo de confirmação (LGPD: evita exclusão acidental).
+    // Pede a senha: quem pegar o aparelho com a sessão aberta não consegue apagar a conta.
+    final senhaController = TextEditingController();
+    final senha = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Excluir conta'),
-        content: const Text(
-          'Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita. '
-          'Seus dados pessoais serão removidos, e você não conseguirá mais acessar a plataforma.',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita. '
+              'Seus dados pessoais serão removidos, e você não conseguirá mais acessar a plataforma.',
+            ),
+            const SizedBox(height: 16),
+            CampoSenha(
+              controller: senhaController,
+              rotulo: 'Digite sua senha para confirmar',
+              aoEnviar: (_) => Navigator.pop(context, senhaController.text),
+            ),
+          ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(context),
             child: const Text('Cancelar'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(context, senhaController.text),
             child: const Text('Sim, excluir'),
           ),
         ],
       ),
     );
-
-    if (confirmou != true) return;
+    if (senha == null) return;
+    if (senha.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Digite sua senha para excluir a conta')),
+        );
+      }
+      return;
+    }
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      await apiDelete('/minha-conta', {'senha': senha});
 
-      final response = await http.delete(
-        Uri.parse('$apiBase/minha-conta'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+      // Limpa o token e volta pra tela de login
+      await prefs.remove('token');
+      await prefs.remove('nome_usuario');
+      await prefs.remove('perfil_usuario');
 
-      if (response.statusCode == 200) {
-        // Limpa o token e volta pra tela de login
-        await prefs.remove('token');
-        await prefs.remove('nome_usuario');
-        await prefs.remove('perfil_usuario');
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Conta excluída com sucesso')),
-          );
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const TelaLogin()),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Erro ao excluir conta')),
-          );
-        }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Conta excluída com sucesso')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const TelaLogin()),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro de conexão: $e')),
+          SnackBar(content: Text(e is ApiErro ? e.mensagem : 'Não foi possível conectar ao servidor.')),
         );
       }
     }

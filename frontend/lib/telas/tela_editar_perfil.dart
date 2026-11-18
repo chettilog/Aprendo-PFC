@@ -118,10 +118,16 @@ class _TelaEditarPerfilState extends State<TelaEditarPerfil> {
       _erroSenha = null;
     });
     try {
-      await apiPut('/perfil/senha', {
+      final resposta = await apiPut('/perfil/senha', {
         'senhaAtual': _senhaAtualController.text,
         'novaSenha': _novaSenhaController.text,
       });
+      // Trocar a senha encerra as sessões antigas; o servidor devolve um token novo para este aparelho
+      final novoToken = resposta is Map ? resposta['token'] : null;
+      if (novoToken is String) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', novoToken);
+      }
       _senhaAtualController.clear();
       _novaSenhaController.clear();
       _confirmacaoController.clear();

@@ -21,6 +21,8 @@ function banco(respostas) {
         return resposta;
       }
     }
+    // Conferência da sessão feita pelo verificarToken: por padrão, a conta existe e a senha não foi trocada
+    if (sql.includes('senha_alterada_em FROM usuarios')) return { rows: [{ senha_alterada_em: null }] };
     return { rows: [] };
   });
 }
@@ -180,9 +182,10 @@ describe('token e perfil de acesso', () => {
     banco([['SELECT perfil', { rows: [{ perfil: 'admin' }] }], ['FROM logs', new Error('fora do ar')]]);
     expect((await request(app).get('/logs').set(auth)).status).toBe(500);
   });
-  test('excluir a própria conta (LGPD)', async () => {
-    banco([['SELECT email', { rows: [{ email: 'a@a.com' }] }]]);
-    const r = await request(app).delete('/minha-conta').set(auth);
+  test('excluir a própria conta (LGPD), confirmando a senha', async () => {
+    const hash = await bcrypt.hash('123456', 4);
+    banco([['SELECT email', { rows: [{ email: 'a@a.com', senha: hash }] }]]);
+    const r = await request(app).delete('/minha-conta').set(auth).send({ senha: '123456' });
     expect(r.status).toBe(200);
     expect(pool.query.mock.calls.some(c => c[0].startsWith('DELETE FROM usuarios'))).toBe(true);
     // o e-mail é mascarado nos logs antigos e não aparece no log da exclusão
@@ -190,6 +193,61 @@ describe('token e perfil de acesso', () => {
     expect(limpeza[1]).toEqual(['a@a.com', 'a***@a.com']);
     const logs = pool.query.mock.calls.filter(c => c[0].includes('INSERT INTO logs'));
     expect(logs.every(c => !String(c[1][2]).includes('a@a.com'))).toBe(true);
+  });
+});
+
+describe('segurança da exclusão de conta e da sessão', () => {
+  test('excluir a conta sem senha ou com senha errada: 400 e nada é apagado', async () => {
+    const hash = await bcrypt.hash('123456', 4);
+    banco([['SELECT email', { rows: [{ email: 'a@a.com', senha: hash }] }]]);
+    expect((await request(app).delete('/minha-conta').set(auth)).status).toBe(400);
+    const r = await request(app).delete('/minha-conta').set(auth).send({ senha: 'errada' });
+    expect(r.status).toBe(400);
+    expect(pool.query.mock.calls.some(c => c[0].startsWith('DELETE FROM usuarios'))).toBe(false);
+    const log = pool.query.mock.calls.find(c => c[0].includes('INSERT INTO logs'))[1];
+    expect(log[1]).toBe('exclusao_conta_falha');
+  });
+  test('token de conta que não existe mais: 401', async () => {
+    banco([['senha_alterada_em FROM usuarios', { rows: [] }]]);
+    expect((await request(app).get('/perfil').set(auth)).status).toBe(401);
+  });
+  test('token emitido antes da troca de senha: 401; emitido depois: aceito', async () => {
+    const antigo = jwt.sign({ id: 7, iat: 1000 }, process.env.JWT_SECRET);
+    banco([['senha_alterada_em FROM usuarios', { rows: [{ senha_alterada_em: new Date(2000 * 1000) }] }]]);
+    const r = await request(app).get('/perfil').set({ Authorization: `Bearer ${antigo}` });
+    expect(r.status).toBe(401);
+    expect(r.body.error).toMatch(/senha foi alterada/);
+    const novo = jwt.sign({ id: 7, iat: 2000 }, process.env.JWT_SECRET);
+    banco([
+      ['senha_alterada_em FROM usuarios', { rows: [{ senha_alterada_em: new Date(2000 * 1000) }] }],
+      ['FROM usuarios WHERE id', { rows: [{ id: 7, nome: 'Ana' }] }],
+    ]);
+    expect((await request(app).get('/perfil').set({ Authorization: `Bearer ${novo}` })).status).toBe(200);
+  });
+  test('token assinado com outro algoritmo é recusado', async () => {
+    const falso = jwt.sign({ id: 7 }, process.env.JWT_SECRET, { algorithm: 'HS512' });
+    expect((await request(app).get('/perfil').set({ Authorization: `Bearer ${falso}` })).status).toBe(403);
+  });
+  test('erro interno não devolve detalhes do banco', async () => {
+    banco([['SELECT NOW', new Error('relation "usuarios" does not exist')]]);
+    const r = await request(app).get('/test-db');
+    expect(r.status).toBe(500);
+    expect(JSON.stringify(r.body)).not.toMatch(/relation|usuarios/);
+    expect(r.body).not.toHaveProperty('detalhes');
+  });
+  test('JSON malformado, rota inexistente e cabeçalho do Express', async () => {
+    const r = await request(app).post('/login').set('Content-Type', 'application/json').send('{"email":');
+    expect(r.status).toBe(400);
+    expect(r.body.error).toBe('JSON inválido');
+    expect(JSON.stringify(r.body)).not.toMatch(/at |node_modules/);
+    const r404 = await request(app).get('/nao-existe');
+    expect(r404.status).toBe(404);
+    expect(r404.body.error).toBe('Rota não encontrada');
+    expect(r404.headers['x-powered-by']).toBeUndefined();
+  });
+  test('corpo grande demais: 413', async () => {
+    const r = await request(app).post('/login').send({ email: 'a@a.com', senha: 'x'.repeat(60 * 1024) });
+    expect(r.status).toBe(413);
   });
 });
 
@@ -238,6 +296,9 @@ describe('editar perfil (RF15)', () => {
     const novo = pool.query.mock.calls.find(c => c[0].startsWith('UPDATE usuarios SET senha'))[1];
     expect(novo[0]).not.toBe('novaSenha1'); // guardada como hash
     expect(await bcrypt.compare('novaSenha1', novo[0])).toBe(true);
+    // registra o momento da troca (encerra sessões antigas) e devolve um token novo
+    expect(novo[1]).toBeInstanceOf(Date);
+    expect(jwt.verify(r.body.token, process.env.JWT_SECRET).id).toBe(7);
   });
   test('senha atual errada: 400 e nada é alterado', async () => {
     const hash = await bcrypt.hash('123456', 4);
@@ -312,7 +373,7 @@ describe('trilhas e aulas (RF04 e RF05)', () => {
   test('níveis: a consulta confere as aulas anteriores do próprio aluno', async () => {
     banco([['FROM aulas a', { rows: [{ id: 4, liberada: true }] }]]);
     await request(app).get('/aulas/4').set(auth);
-    const [sql, params] = pool.query.mock.calls[0];
+    const [sql, params] = pool.query.mock.calls.find(c => c[0].includes('FROM aulas a'));
     expect(sql).toContain('anterior.ordem < a.ordem');
     expect(params).toEqual(['4', 7]);
   });

@@ -52,11 +52,12 @@ Future<dynamic> apiPut(String caminho, Map<String, dynamic> corpo) async {
   return _tratarResposta(resposta);
 }
 
-// DELETE em uma rota protegida
-Future<dynamic> apiDelete(String caminho) async {
+// DELETE em uma rota protegida (com corpo opcional, ex.: a senha para excluir a conta)
+Future<dynamic> apiDelete(String caminho, [Map<String, dynamic>? corpo]) async {
   final resposta = await http.delete(
     Uri.parse('$apiBase$caminho'),
     headers: await _cabecalhos(),
+    body: corpo == null ? null : jsonEncode(corpo),
   );
   return _tratarResposta(resposta);
 }

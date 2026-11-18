@@ -1,8 +1,11 @@
 // Dados da própria conta: ver e editar o perfil (RF15) e excluir a conta (RF21 e LGPD)
 const express = require('express');
+const { erroInterno } = require('../utils/erros');
 const bcrypt = require('bcrypt');
 const pool = require('../config/banco');
+const jwt = require('jsonwebtoken');
 const { verificarToken } = require('../middlewares/autenticacao');
+const { limites } = require('../middlewares/limites');
 const { registrarLog, removerEmailDosLogs } = require('../servicos/logs');
 const { validarNome, validarSenha, validarAvatar } = require('../utils/validacoes');
 
@@ -24,7 +27,7 @@ router.get('/perfil', verificarToken, async (req, res) => {
 
     res.json({ usuario: result.rows[0] });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao buscar perfil', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao buscar perfil');
   }
 });
 
@@ -50,7 +53,7 @@ router.put('/perfil', verificarToken, async (req, res) => {
     await registrarLog(req.usuario.id, 'edicao_perfil', 'Nome alterado pelo próprio titular', req.ip, true);
     res.json({ message: 'Perfil atualizado com sucesso!', usuario: result.rows[0] });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao atualizar perfil', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao atualizar perfil');
   }
 });
 
@@ -73,13 +76,13 @@ router.put('/perfil/avatar', verificarToken, async (req, res) => {
     await registrarLog(req.usuario.id, 'edicao_avatar', 'Avatar alterado pelo próprio titular', req.ip, true);
     res.json({ message: 'Avatar atualizado!', avatar: result.rows[0].avatar });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao atualizar o avatar', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao atualizar o avatar');
   }
 });
 
 // Troca de senha (RF15): exige a senha atual, para que ninguém troque a senha
 // usando apenas um token esquecido aberto em outro aparelho
-router.put('/perfil/senha', verificarToken, async (req, res) => {
+router.put('/perfil/senha', verificarToken, limites.senha, async (req, res) => {
   const { senhaAtual, novaSenha } = req.body || {};
   if (typeof senhaAtual !== 'string' || senhaAtual.length === 0) {
     return res.status(400).json({ error: 'Informe a senha atual' });
@@ -106,25 +109,42 @@ router.put('/perfil/senha', verificarToken, async (req, res) => {
     }
 
     const novoHash = await bcrypt.hash(novaSenha, 10);
-    await pool.query('UPDATE usuarios SET senha = $1 WHERE id = $2', [novoHash, req.usuario.id]);
+    // senha_alterada_em encerra os tokens emitidos antes da troca (ver verificarToken).
+    // A hora vem do próprio servidor, o mesmo relógio usado para emitir os tokens.
+    const agora = new Date();
+    await pool.query('UPDATE usuarios SET senha = $1, senha_alterada_em = $2 WHERE id = $3',
+      [novoHash, agora, req.usuario.id]);
     await registrarLog(req.usuario.id, 'troca_senha', 'Senha alterada pelo próprio titular', req.ip, true);
 
-    res.json({ message: 'Senha alterada com sucesso!' });
+    // Novo token, para quem trocou a senha continuar logado neste aparelho
+    const token = jwt.sign({ id: req.usuario.id }, process.env.JWT_SECRET, { expiresIn: '2h' });
+
+    res.json({ message: 'Senha alterada com sucesso!', token });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao alterar a senha', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao alterar a senha');
   }
 });
 
 // Permite o usuário logado excluir a própria conta (LGPD - direito à exclusão)
-router.delete('/minha-conta', verificarToken, async (req, res) => {
+// A exclusão pede a senha: quem pegar o aparelho com a sessão aberta não consegue apagar a conta
+router.delete('/minha-conta', verificarToken, limites.senha, async (req, res) => {
+  const { senha } = req.body || {};
+  if (typeof senha !== 'string' || senha.length === 0) {
+    return res.status(400).json({ error: 'Informe sua senha para excluir a conta' });
+  }
   try {
     const usuarioId = req.usuario.id;
 
     // Busca o e-mail antes de apagar, para poder tirá-lo dos logs antigos
-    const busca = await pool.query('SELECT email FROM usuarios WHERE id = $1', [usuarioId]);
+    const busca = await pool.query('SELECT email, senha FROM usuarios WHERE id = $1', [usuarioId]);
 
     if (busca.rows.length === 0) {
       return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    if (!(await bcrypt.compare(senha, busca.rows[0].senha))) {
+      await registrarLog(usuarioId, 'exclusao_conta_falha', 'Senha incorreta na exclusão da conta', req.ip, false);
+      return res.status(400).json({ error: 'Senha incorreta' });
     }
 
     const emailUsuario = busca.rows[0].email;
@@ -147,7 +167,7 @@ router.delete('/minha-conta', verificarToken, async (req, res) => {
 
     res.json({ message: 'Sua conta foi excluída com sucesso. Sentimos sua falta!' });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao excluir conta', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao excluir conta');
   }
 });
 

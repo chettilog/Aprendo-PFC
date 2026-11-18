@@ -1,7 +1,9 @@
 // Produção do aluno (RF06): envia a explicação, recebe a avaliação (RF07) e o XP (RF08)
 const express = require('express');
+const { erroInterno } = require('../utils/erros');
 const pool = require('../config/banco');
 const { verificarToken } = require('../middlewares/autenticacao');
+const { limites } = require('../middlewares/limites');
 const { idValido, validarProducao } = require('../utils/validacoes');
 const { avaliarProducao } = require('../servicos/avaliacao');
 const { XP_POR_AULA, calcularNivel, xpAGanhar } = require('../servicos/xp');
@@ -9,7 +11,7 @@ const { XP_POR_AULA, calcularNivel, xpAGanhar } = require('../servicos/xp');
 const router = express.Router();
 
 // Registra a produção (texto), avalia e atribui XP
-router.post('/aulas/:id/producoes', verificarToken, async (req, res) => {
+router.post('/aulas/:id/producoes', verificarToken, limites.producoes, async (req, res) => {
   const { id } = req.params;
   if (!idValido(id)) {
     return res.status(400).json({ error: 'Identificador de aula inválido' });
@@ -117,7 +119,7 @@ router.post('/aulas/:id/producoes', verificarToken, async (req, res) => {
     if (err.code === '23503') {
       return res.status(404).json({ error: 'Usuário ou aula não encontrados' });
     }
-    res.status(500).json({ error: 'Erro ao registrar produção', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao registrar produção');
   } finally {
     if (client) client.release();
   }
@@ -141,7 +143,7 @@ router.get('/aulas/:id/producoes', verificarToken, async (req, res) => {
     );
     res.json({ producoes: result.rows });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao listar produções', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao listar produções');
   }
 });
 

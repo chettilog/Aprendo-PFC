@@ -64,6 +64,12 @@ function interpretarResposta(json) {
   return { nota, criterios, comentario };
 }
 
+// Tira do texto do aluno os marcadores <<< e >>>: assim ele não consegue "fechar" a área
+// da resposta dentro do próprio texto e escrever ordens fora dela para a IA
+function limparMarcadores(texto) {
+  return String(texto).replace(/<{3,}|>{3,}/g, '');
+}
+
 function montarPrompt(texto, aula) {
   return `AULA: ${aula.titulo}
 CONTEÚDO DA AULA:
@@ -74,7 +80,7 @@ ${aula.resposta_referencia || '(não informada; use o conteúdo da aula)'}
 
 EXPLICAÇÃO DO ALUNO:
 <<<ALUNO>>>
-${texto}
+${limparMarcadores(texto)}
 <<<FIM>>>`;
 }
 
@@ -161,5 +167,5 @@ async function avaliarComIA(texto, aula) {
 }
 
 module.exports = {
-  RUBRICA, iaConfigurada, interpretarResposta, montarPrompt, modelos, chamarGemini, avaliarComIA,
+  RUBRICA, iaConfigurada, interpretarResposta, montarPrompt, limparMarcadores, modelos, chamarGemini, avaliarComIA,
 };

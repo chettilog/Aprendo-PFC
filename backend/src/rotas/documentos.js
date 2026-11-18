@@ -1,5 +1,6 @@
 // Termos de Uso e Política de Privacidade (públicos, lidos da pasta documentos/)
 const express = require('express');
+const { erroInterno } = require('../utils/erros');
 const fs = require('fs');
 const path = require('path');
 
@@ -11,7 +12,7 @@ function enviarDocumento(res, arquivo, versao, mensagemErro) {
     const conteudo = fs.readFileSync(path.join(PASTA_DOCUMENTOS, arquivo), 'utf-8');
     res.json({ versao, conteudo });
   } catch (err) {
-    res.status(500).json({ error: mensagemErro, detalhes: err.message });
+    erroInterno(res, err, mensagemErro);
   }
 }
 

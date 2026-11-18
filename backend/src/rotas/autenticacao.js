@@ -1,10 +1,12 @@
 // Cadastro e login (RF01 e RF02)
 const express = require('express');
+const { erroInterno } = require('../utils/erros');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/banco');
 const { registrarLog, mascararEmail } = require('../servicos/logs');
 const { validarCadastro } = require('../utils/validacoes');
+const { limites } = require('../middlewares/limites');
 
 const router = express.Router();
 
@@ -12,7 +14,7 @@ const router = express.Router();
 const VERSAO_TERMOS = '1.4';
 
 // Cadastro de usuário
-router.post('/cadastro', async (req, res) => {
+router.post('/cadastro', limites.cadastro, async (req, res) => {
   try {
     const { senha, aceitouTermos, idadeMinima } = req.body || {};
     const nome = typeof req.body?.nome === 'string' ? req.body.nome.trim() : '';
@@ -72,12 +74,12 @@ router.post('/cadastro', async (req, res) => {
       );
       return res.status(409).json({ error: 'Este e-mail já está cadastrado' });
     }
-    res.status(500).json({ error: 'Erro ao cadastrar usuário', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao cadastrar usuário');
   }
 });
 
 // Login: confere e-mail e senha e devolve um token JWT válido por 2 horas
-router.post('/login', async (req, res) => {
+router.post('/login', limites.loginPorIp, limites.loginPorEmail, async (req, res) => {
   try {
     const { email, senha } = req.body || {};
 
@@ -127,7 +129,7 @@ router.post('/login', async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao realizar login', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao realizar login');
   }
 });
 

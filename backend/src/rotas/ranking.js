@@ -1,8 +1,10 @@
 // Ranking entre colegas: o aluno adiciona colegas pelo código (Nome#1234) e compara o XP.
 // Ranking geral: os 20 alunos com mais XP, entre os que deixaram ligada a opção de aparecer no ranking.
 const express = require('express');
+const { erroInterno } = require('../utils/erros');
 const pool = require('../config/banco');
 const { verificarToken } = require('../middlewares/autenticacao');
+const { limites } = require('../middlewares/limites');
 const { registrarLog } = require('../servicos/logs');
 const { calcularNivel } = require('../servicos/xp');
 const {
@@ -46,7 +48,7 @@ router.get('/ranking', verificarToken, async (req, res) => {
       ranking,
     });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao carregar o ranking', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao carregar o ranking');
   }
 });
 
@@ -86,12 +88,12 @@ router.get('/ranking/geral', verificarToken, async (req, res) => {
       ...montarRankingGeral(resultado.rows, uid, calcularNivel),
     });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao carregar o ranking geral', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao carregar o ranking geral');
   }
 });
 
 // Adiciona um colega pelo código completo (Nome#1234)
-router.post('/ranking/colegas', verificarToken, async (req, res) => {
+router.post('/ranking/colegas', verificarToken, limites.colegas, async (req, res) => {
   const uid = req.usuario.id;
   const alvo = interpretarCodigo((req.body || {}).codigo);
   if (!alvo) {
@@ -131,7 +133,7 @@ router.post('/ranking/colegas', verificarToken, async (req, res) => {
     await registrarLog(uid, 'ranking_adicionar', 'Colega adicionado ao ranking', req.ip, true);
     res.status(201).json({ message: 'Colega adicionado!', colega: formatarCodigo(colega.nome, colega.codigo) });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao adicionar colega', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao adicionar colega');
   }
 });
 
@@ -153,7 +155,7 @@ router.delete('/ranking/colegas/:codigo', verificarToken, async (req, res) => {
     }
     res.json({ message: 'Colega removido do ranking' });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao remover colega', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao remover colega');
   }
 });
 
@@ -174,7 +176,7 @@ router.put('/ranking/visibilidade', verificarToken, async (req, res) => {
     );
     res.json({ aparecer_no_ranking: aparecer });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao alterar a visibilidade', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao alterar a visibilidade');
   }
 });
 

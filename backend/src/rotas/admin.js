@@ -1,5 +1,6 @@
 // Rotas exclusivas do administrador
 const express = require('express');
+const { erroInterno } = require('../utils/erros');
 const pool = require('../config/banco');
 const { verificarToken, exigirPerfil } = require('../middlewares/autenticacao');
 const { registrarLog } = require('../servicos/logs');
@@ -31,7 +32,7 @@ router.get('/logs', verificarToken, exigirPerfil('admin'), async (req, res) => {
     );
     res.json({ logs: result.rows });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao buscar logs', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao buscar logs');
   }
 });
 
@@ -92,7 +93,7 @@ router.get('/admin/visao-geral', verificarToken, exigirPerfil('admin'), async (r
       },
     });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao carregar a visão geral', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao carregar a visão geral');
   }
 });
 

@@ -33,6 +33,16 @@ O servidor da API usa um plano gratuito e é suspenso quando fica sem acessos; a
 - Edição do perfil: escolha do avatar (12 ícones prontos), troca do nome e troca da senha, que exige a senha atual (o e-mail não é editável)
 - O avatar aparece no Perfil, na saudação do Início e nos rankings; não há envio de foto
 
+**Proteções de segurança**
+- Limite de tentativas: 5 senhas erradas por conta a cada 15 minutos (e 30 por IP, folgado porque numa escola vários alunos saem pelo mesmo IP), 30 cadastros por hora por IP, 20 explicações a cada 10 minutos por aluno e 10 códigos de colega inválidos a cada 15 minutos. Quem passa do limite recebe 429, e o primeiro bloqueio fica nos logs
+- Trocar a senha encerra as sessões abertas em outros aparelhos (o token antigo deixa de valer) e devolve um token novo para o aparelho atual
+- Excluir a conta exige a senha
+- Erros internos não devolvem detalhes do banco ao cliente; JSON malformado e rotas inexistentes recebem respostas curtas, sem o rastro de erro do Express
+- O texto do aluno não consegue "fechar" a área da resposta no pedido enviado à IA (os marcadores `<<<` e `>>>` são removidos)
+- O IP real do aluno é registrado nos logs mesmo atrás do proxy do Render (`trust proxy`)
+- Em produção, a API só aceita chamadas do navegador vindas do endereço do app (`ORIGENS_PERMITIDAS`)
+- Todo SQL é parametrizado (sem *SQL injection*), e o corpo das requisições é limitado a 50 KB
+
 **Trilhas e aulas**
 - Três trilhas de exemplo: Matemática (Fundamentos de Funções), História (Revolução Industrial) e Geografia (Clima e Tempo), com 5 aulas cada, divididas em dois níveis
 - Lista de trilhas por matéria, com o progresso do aluno em cada uma
@@ -112,7 +122,8 @@ aprendo/
 │   │   ├── config/
 │   │   │   └── banco.js       # Conexão com o PostgreSQL
 │   │   ├── middlewares/
-│   │   │   └── autenticacao.js  # verificarToken (JWT) e exigirPerfil (admin)
+│   │   │   ├── autenticacao.js  # verificarToken (JWT e sessão) e exigirPerfil (admin)
+│   │   │   └── limites.js       # limite de tentativas (login, cadastro, explicações, colegas)
 │   │   ├── rotas/             # Um arquivo por parte do sistema
 │   │   │   ├── autenticacao.js  # POST /cadastro, POST /login
 │   │   │   ├── usuarios.js      # ver e editar perfil, trocar senha, excluir conta
@@ -120,7 +131,7 @@ aprendo/
 │   │   │   ├── producoes.js     # envio da explicação, nota e XP
 │   │   │   ├── dashboard.js     # GET /dashboard (resumo da aba Início)
 │   │   │   ├── estatisticas.js  # GET /estatisticas (gráficos da aba Dashboard)
-│   │   │   ├── ranking.js       # ranking entre colegas
+│   │   │   ├── ranking.js       # ranking entre colegas e ranking geral
 │   │   │   ├── admin.js         # GET /logs e GET /admin/visao-geral
 │   │   │   ├── documentos.js    # termos e política
 │   │   │   ├── wiki.js          # consulta à Wikipedia
@@ -133,7 +144,8 @@ aprendo/
 │   │   │   ├── ranking.js       # código Nome#1234 e ordem do ranking
 │   │   │   └── logs.js          # auditoria, máscara de e-mail e limpeza dos logs antigos
 │   │   └── utils/
-│   │       └── validacoes.js  # validação do cadastro, ids e explicação
+│   │       ├── erros.js       # resposta de erro interno sem detalhes do banco
+│   │       └── validacoes.js  # validação do cadastro, ids, explicação e avatar
 │   ├── testes/                # Testes automáticos (Jest)
 │   ├── documentos/            # Termos de Uso e Política de Privacidade
 │   ├── sql/                   # Scripts das tabelas e dados de exemplo
@@ -181,7 +193,7 @@ aprendo/
 | PUT | `/perfil` | JWT | Altera o nome do usuário logado (RF15) |
 | PUT | `/perfil/avatar` | JWT | Troca o avatar (número de 0 a 11) (RF15) |
 | PUT | `/perfil/senha` | JWT | Troca a senha, exigindo a senha atual (RF15) |
-| DELETE | `/minha-conta` | JWT | Exclui a conta do titular |
+| DELETE | `/minha-conta` | JWT | Exclui a conta do titular, exigindo a senha (`{"senha": "..."}`) |
 | GET | `/logs` | JWT + admin | Os 100 logs de auditoria mais recentes (`?falhas=true` traz só as falhas) |
 | GET | `/admin/visao-geral` | JWT + admin | Números da plataforma, sem dados pessoais |
 | GET | `/wiki/:topico` | JWT | Consulta à Wikipedia |
@@ -246,6 +258,7 @@ psql -U postgres -d aprendo_db -f sql/08-aulas-resumidas.sql
 psql -U postgres -d aprendo_db -f sql/09-ranking.sql
 psql -U postgres -d aprendo_db -f sql/10-niveis-trilha.sql
 psql -U postgres -d aprendo_db -f sql/11-avatar-ranking-geral.sql
+psql -U postgres -d aprendo_db -f sql/12-seguranca.sql
 ```
 
 O conteúdo das aulas (título, texto, palavras-chave e resposta de referência) é cadastrado por esses scripts, direto na tabela `aulas`. Não há tela de cadastro de aulas no app.
@@ -274,6 +287,8 @@ DB_NAME=aprendo_db
 JWT_SECRET=defina_uma_chave_secreta_longa
 GEMINI_API_KEY=sua_chave_do_google_ai_studio
 ```
+
+Em produção, defina também `ORIGENS_PERMITIDAS` com o endereço do app (ex.: `https://aprendo-app.netlify.app`; vários endereços separados por vírgula). Sem essa variável, qualquer origem é aceita, o que é útil no desenvolvimento local. `PROXIES_CONFIAVEIS` (padrão: 1) é o número de proxies na frente da API.
 
 A `GEMINI_API_KEY` é gratuita (https://aistudio.google.com/apikey). Sem ela, o sistema funciona normalmente e corrige pelas palavras-chave. O modelo pode ser trocado com `GEMINI_MODELO` (padrão: `gemini-flash-latest`) e o de reserva com `GEMINI_MODELO_RESERVA` (padrão: `gemini-flash-lite-latest`).
 

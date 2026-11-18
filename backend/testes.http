@@ -366,6 +366,15 @@ Content-Type: application/json
 ### Excluir conta sem token - esperado 401
 DELETE {{api}}/minha-conta
 
-### Excluir a conta descartavel - esperado 200
+### Excluir a conta sem informar a senha - esperado 400
 DELETE {{api}}/minha-conta
 Authorization: Bearer {{loginDescartavel.response.body.token}}
+
+### Excluir a conta descartavel, confirmando a senha - esperado 200
+DELETE {{api}}/minha-conta
+Authorization: Bearer {{loginDescartavel.response.body.token}}
+Content-Type: application/json
+
+{
+  "senha": "123456"
+}

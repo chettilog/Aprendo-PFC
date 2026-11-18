@@ -1,6 +1,7 @@
 // Busca na Wikipedia feita pelo servidor (proxy): a Wikipedia recebe só o IP do backend,
 // nunca o do aluno (minimização de dados - LGPD)
 const express = require('express');
+const { erroInterno } = require('../utils/erros');
 const { verificarToken } = require('../middlewares/autenticacao');
 const { registrarLog } = require('../servicos/logs');
 
@@ -40,7 +41,7 @@ router.get('/wiki/:topico', verificarToken, async (req, res) => {
       imagem: dados.thumbnail?.source || null,
     });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao buscar tópico', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao buscar tópico');
   }
 });
 

@@ -1,6 +1,7 @@
 // Dashboard do aluno (RF03 e RF13): XP, nível, progresso por trilha, XP dos últimos 7 dias,
 // dias seguidos de estudo, últimas explicações e a próxima aula a fazer
 const express = require('express');
+const { erroInterno } = require('../utils/erros');
 const pool = require('../config/banco');
 const { verificarToken } = require('../middlewares/autenticacao');
 const { XP_POR_NIVEL, calcularNivel } = require('../servicos/xp');
@@ -125,7 +126,7 @@ router.get('/dashboard', verificarToken, async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao carregar o dashboard', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao carregar o dashboard');
   }
 });
 

@@ -20,6 +20,8 @@ function banco(respostas) {
         return resposta;
       }
     }
+    // Conferência da sessão feita pelo verificarToken: por padrão, a conta existe e a senha não foi trocada
+    if (sql.includes('senha_alterada_em FROM usuarios')) return { rows: [{ senha_alterada_em: null }] };
     return { rows: [] };
   });
 }
@@ -205,7 +207,7 @@ describe('ranking geral', () => {
     banco([['aparecer_no_ranking FROM usuarios', { rows: [{ aparecer_no_ranking: false }] }]]);
     const r = await request(app).get('/ranking/geral').set(auth);
     expect(r.body.minha_posicao).toBeNull();
-    const [sql, params] = pool.query.mock.calls[1];
+    const [sql, params] = pool.query.mock.calls.find(c => c[0].includes('WITH participantes'));
     expect(sql).toContain("u.perfil = 'aluno' AND u.aparecer_no_ranking = true");
     expect(sql).toContain('RANK() OVER');
     expect(params).toEqual([7, 20]);

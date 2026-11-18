@@ -3,6 +3,7 @@
 // melhor nota por aula, média dos critérios da rubrica e desempenho por matéria.
 // Todos os números são só do próprio aluno.
 const express = require('express');
+const { erroInterno } = require('../utils/erros');
 const pool = require('../config/banco');
 const { verificarToken } = require('../middlewares/autenticacao');
 const { XP_POR_NIVEL, calcularNivel } = require('../servicos/xp');
@@ -154,7 +155,7 @@ router.get('/estatisticas', verificarToken, async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao carregar as estatísticas', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao carregar as estatísticas');
   }
 });
 

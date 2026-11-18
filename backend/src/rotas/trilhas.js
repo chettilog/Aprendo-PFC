@@ -1,5 +1,6 @@
 // Conteúdo: trilhas e aulas (RF04 e RF05)
 const express = require('express');
+const { erroInterno } = require('../utils/erros');
 const pool = require('../config/banco');
 const { verificarToken } = require('../middlewares/autenticacao');
 const { idValido } = require('../utils/validacoes');
@@ -19,7 +20,7 @@ router.get('/trilhas', verificarToken, async (req, res) => {
     );
     res.json({ trilhas: result.rows });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao listar trilhas', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao listar trilhas');
   }
 });
 
@@ -74,7 +75,7 @@ router.get('/trilhas/:id/aulas', verificarToken, async (req, res) => {
     }));
     res.json({ trilha: trilha.rows[0], aulas: lista });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao listar aulas', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao listar aulas');
   }
 });
 
@@ -114,7 +115,7 @@ router.get('/aulas/:id', verificarToken, async (req, res) => {
     }
     res.json({ aula });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao buscar aula', detalhes: err.message });
+    erroInterno(res, err, 'Erro ao buscar aula');
   }
 });
 
