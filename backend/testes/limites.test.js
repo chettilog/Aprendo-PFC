@@ -66,3 +66,12 @@ test('login: a 6ª senha errada para o mesmo e-mail é bloqueada', async () => {
   // o e-mail é comparado sem diferenciar maiúsculas
   expect((await request(app).post('/login').send({ email: 'alvo@teste.com', senha: 'x' })).status).toBe(429);
 });
+
+test('recuperação: o 4º pedido de código na mesma hora para o mesmo e-mail é bloqueado', async () => {
+  const app = require('../src/app');
+  const pedir = () => request(app).post('/senha/esqueci').send({ email: 'Alvo@Teste.com' });
+  for (let i = 0; i < 3; i++) expect((await pedir()).status).toBe(200);
+  const r = await pedir();
+  expect(r.status).toBe(429);
+  expect(r.body.error).toMatch(/vários códigos/);
+});

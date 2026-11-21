@@ -22,6 +22,7 @@ app.use(cors(origens.length ? { origin: origens } : {}));
 // Cada arquivo da pasta rotas/ cuida de uma parte do sistema
 app.use(require('./rotas/status'));       // GET /  e  GET /test-db
 app.use(require('./rotas/autenticacao')); // POST /cadastro, POST /login
+app.use(require('./rotas/recuperacao'));  // POST /senha/esqueci, POST /senha/redefinir
 app.use(require('./rotas/usuarios'));     // GET e PUT /perfil, PUT /perfil/avatar, PUT /perfil/senha, DELETE /minha-conta
 app.use(require('./rotas/admin'));        // GET /logs e GET /admin/visao-geral (só admin)
 app.use(require('./rotas/documentos'));   // GET /termos, GET /politica
@@ -39,7 +40,6 @@ app.use((req, res) => {
 
 // Erros que chegam aqui (JSON malformado, corpo grande demais...) recebem resposta curta,
 // sem o rastro de erro (stack trace) que o Express mostraria por padrão
-// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'JSON inválido' });
   if (err.type === 'entity.too.large') return res.status(413).json({ error: 'Conteúdo grande demais' });

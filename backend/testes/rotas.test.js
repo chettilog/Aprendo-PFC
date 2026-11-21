@@ -72,6 +72,19 @@ describe('cadastro (RF01)', () => {
     const log = pool.query.mock.calls.find(c => c[0].includes('INSERT INTO logs'))[1];
     expect(log[2]).not.toContain('a@a.com');
   });
+  test('e-mail é guardado em minúsculas e não repete com outra caixa', async () => {
+    banco([['INSERT INTO usuarios', { rows: [{ id: 1, nome: 'Ana', email: 'ana@a.com' }] }]]);
+    await request(app).post('/cadastro')
+      .send({ nome: 'Ana', email: ' Ana@A.com ', senha: '123456', aceitouTermos: true, idadeMinima: true });
+    expect(pool.query.mock.calls.find(c => c[0].includes('INSERT INTO usuarios'))[1][1]).toBe('ana@a.com');
+
+    pool.query.mockClear();
+    banco([['WHERE lower(email) = $1', { rows: [{ '?column?': 1 }] }]]);
+    const r = await request(app).post('/cadastro')
+      .send({ nome: 'Ana', email: 'ANA@a.com', senha: '123456', aceitouTermos: true, idadeMinima: true });
+    expect(r.status).toBe(409);
+    expect(pool.query.mock.calls.some(c => c[0].includes('INSERT INTO usuarios'))).toBe(false);
+  });
   test('e-mail repetido devolve 409', async () => {
     banco([['INSERT INTO usuarios', Object.assign(new Error('dup'), { code: '23505' })]]);
     const r = await request(app).post('/cadastro')
@@ -86,18 +99,27 @@ describe('login (RF02)', () => {
   test('campos obrigatórios', async () => {
     expect((await request(app).post('/login').send({})).status).toBe(400);
   });
+  test('o login não diferencia maiúsculas no e-mail', async () => {
+    const hash = await bcrypt.hash('123456', 4);
+    banco([['WHERE lower(email) = lower($1)', { rows: [{ id: 1, nome: 'Ana', email: 'Ana@A.com', senha: hash, perfil: 'aluno' }] }]]);
+    const r = await request(app).post('/login').send({ email: '  ana@a.com ', senha: '123456' });
+    expect(r.status).toBe(200);
+    const [sql, params] = pool.query.mock.calls.find(c => c[0].includes('lower(email) = lower($1)'));
+    expect(params).toEqual(['ana@a.com']);
+    expect(sql).toContain('LIMIT 1');
+  });
   test('e-mail inexistente e senha errada dão a mesma mensagem', async () => {
     const hash = await bcrypt.hash('123456', 4);
-    banco([['FROM usuarios WHERE email', { rows: [] }]]);
+    banco([['WHERE lower(email) = lower($1)', { rows: [] }]]);
     const r1 = await request(app).post('/login').send({ email: 'x@x.com', senha: '123456' });
-    banco([['FROM usuarios WHERE email', { rows: [{ id: 1, nome: 'Ana', email: 'a@a.com', senha: hash }] }]]);
+    banco([['WHERE lower(email) = lower($1)', { rows: [{ id: 1, nome: 'Ana', email: 'a@a.com', senha: hash }] }]]);
     const r2 = await request(app).post('/login').send({ email: 'a@a.com', senha: 'errada' });
     expect(r1.status).toBe(401);
     expect(r2.status).toBe(401);
     expect(r1.body.error).toBe(r2.body.error);
   });
   test('tentativa com e-mail desconhecido grava o e-mail mascarado no log', async () => {
-    banco([['FROM usuarios WHERE email', { rows: [] }]]);
+    banco([['WHERE lower(email) = lower($1)', { rows: [] }]]);
     await request(app).post('/login').send({ email: 'joao.silva@email.com', senha: '123456' });
     const log = pool.query.mock.calls.find(c => c[0].includes('INSERT INTO logs'))[1];
     expect(log[2]).toContain('j***@email.com');
@@ -105,7 +127,7 @@ describe('login (RF02)', () => {
   });
   test('login certo devolve um token JWT', async () => {
     const hash = await bcrypt.hash('123456', 4);
-    banco([['FROM usuarios WHERE email', { rows: [{ id: 1, nome: 'Ana', email: 'a@a.com', senha: hash, perfil: 'aluno' }] }]]);
+    banco([['WHERE lower(email) = lower($1)', { rows: [{ id: 1, nome: 'Ana', email: 'a@a.com', senha: hash, perfil: 'aluno' }] }]]);
     const r = await request(app).post('/login').send({ email: 'a@a.com', senha: '123456' });
     expect(r.status).toBe(200);
     expect(r.body.usuario).toEqual({ id: 1, nome: 'Ana', email: 'a@a.com', perfil: 'aluno' }); // sem a senha

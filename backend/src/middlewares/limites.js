@@ -88,6 +88,17 @@ const limites = {
     mensagem: 'Muitos códigos inválidos. Aguarde 15 minutos e tente de novo.',
   }),
   senha: limitarTentativas({ nome: 'senha', janelaMs: 15 * MINUTO, maximo: 5, chave: idDoUsuario, contarSoFalhas: true }),
+  // Recuperação de senha: poucos e-mails por conta (evita encher a caixa de alguém) e
+  // poucas tentativas de código (um código de 6 dígitos não pode ser adivinhado na força)
+  recuperacaoPorIp: limitarTentativas({ nome: 'recuperacao-ip', janelaMs: 60 * MINUTO, maximo: 30 }),
+  recuperacaoPorEmail: limitarTentativas({
+    nome: 'recuperacao-email', janelaMs: 60 * MINUTO, maximo: 3, chave: emailDoCorpo,
+    mensagem: 'Você já pediu vários códigos. Aguarde uma hora ou use o último código recebido.',
+  }),
+  recuperacaoCodigo: limitarTentativas({
+    nome: 'recuperacao-codigo', janelaMs: 15 * MINUTO, maximo: 10, chave: emailDoCorpo, contarSoFalhas: true,
+    mensagem: 'Muitas tentativas de código. Aguarde 15 minutos.',
+  }),
 };
 
 function limparContadores() { contadores.clear(); }

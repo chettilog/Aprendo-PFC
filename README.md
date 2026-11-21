@@ -20,13 +20,15 @@ O servidor da API usa um plano gratuito e é suspenso quando fica sem acessos; a
 - **Banco de dados:** PostgreSQL
 - **Segurança:** JWT (autenticação) + bcrypt (criptografia de senhas)
 - **Correção das explicações:** Google Gemini (IA) com rubrica, com reserva por palavras-chave
-- **Testes:** Jest + Supertest (backend) e flutter_test (frontend)
+- **Testes e qualidade:** Jest + Supertest e ESLint (backend); flutter_test e flutter analyze (frontend)
+- **E-mail:** Brevo (envio do código de recuperação de senha)
 - **Hospedagem:** Neon (banco), Render (backend) e Netlify (site)
 
 ## Funcionalidades implementadas
 
 **Autenticação e controle de acesso**
-- Cadastro e login com validação dos campos na tela e no servidor (nome, formato do e-mail e tamanho da senha)
+- Cadastro e login com validação dos campos na tela e no servidor (nome, formato do e-mail e tamanho da senha); o e-mail não diferencia maiúsculas de minúsculas
+- **Recuperação de senha** ("Esqueci minha senha" no login): o aluno recebe no e-mail um código de 6 dígitos, válido por 15 minutos, de uso único e com no máximo 5 tentativas. O banco guarda só o *hash* do código, e a resposta é a mesma exista ou não a conta
 - Senhas criptografadas com bcrypt e login com token JWT (expiração de 2 horas)
 - Perfis de usuário (`aluno` e `admin`), com permissões verificadas no backend a cada requisição
 - Logout com remoção do token
@@ -37,6 +39,7 @@ O servidor da API usa um plano gratuito e é suspenso quando fica sem acessos; a
 - Limite de tentativas: 5 senhas erradas por conta a cada 15 minutos (e 30 por IP, folgado porque numa escola vários alunos saem pelo mesmo IP), 30 cadastros por hora por IP, 20 explicações a cada 10 minutos por aluno e 10 códigos de colega inválidos a cada 15 minutos. Quem passa do limite recebe 429, e o primeiro bloqueio fica nos logs
 - Trocar a senha encerra as sessões abertas em outros aparelhos (o token antigo deixa de valer) e devolve um token novo para o aparelho atual
 - Excluir a conta exige a senha
+- Recuperação de senha com código de uso único, guardado só como *hash*, com validade curta, limite de tentativas e de pedidos por e-mail
 - Erros internos não devolvem detalhes do banco ao cliente; JSON malformado e rotas inexistentes recebem respostas curtas, sem o rastro de erro do Express
 - O texto do aluno não consegue "fechar" a área da resposta no pedido enviado à IA (os marcadores `<<<` e `>>>` são removidos)
 - O IP real do aluno é registrado nos logs mesmo atrás do proxy do Render (`trust proxy`)
@@ -126,6 +129,7 @@ aprendo/
 │   │   │   └── limites.js       # limite de tentativas (login, cadastro, explicações, colegas)
 │   │   ├── rotas/             # Um arquivo por parte do sistema
 │   │   │   ├── autenticacao.js  # POST /cadastro, POST /login
+│   │   │   ├── recuperacao.js   # POST /senha/esqueci e /senha/redefinir
 │   │   │   ├── usuarios.js      # ver e editar perfil, trocar senha, excluir conta
 │   │   │   ├── trilhas.js       # trilhas e aulas
 │   │   │   ├── producoes.js     # envio da explicação, nota e XP
@@ -139,6 +143,7 @@ aprendo/
 │   │   ├── servicos/          # Regras de negócio (sem rotas)
 │   │   │   ├── avaliacao.js     # filtro, nota e resultado da explicação
 │   │   │   ├── ia.js            # chamada ao Gemini com a rubrica
+│   │   │   ├── email.js         # envio de e-mail pelo Brevo (código de recuperação)
 │   │   │   ├── xp.js            # XP por resultado, XP a ganhar e nível
 │   │   │   ├── progresso.js     # dias seguidos de estudo e próxima aula
 │   │   │   ├── ranking.js       # código Nome#1234 e ordem do ranking
@@ -162,6 +167,7 @@ aprendo/
 │   │   │   └── cartoes.dart     # Cartões e indicadores usados por várias telas
 │   │   └── telas/
 │   │       ├── tela_login.dart
+│   │       ├── tela_recuperar_senha.dart # Esqueci minha senha (código por e-mail)
 │   │       ├── tela_cadastro.dart
 │   │       ├── tela_inicio.dart     # Navegação (Início, Trilhas, Dashboard, Ranking, Perfil e Admin)
 │   │       ├── tela_admin.dart      # Aba Admin (visão geral e logs)
@@ -187,6 +193,8 @@ aprendo/
 |---|---|---|---|
 | POST | `/cadastro` | Público | Cria conta (valida os campos e exige aceite dos termos e declaração de idade mínima) |
 | POST | `/login` | Público | Autentica e retorna token JWT |
+| POST | `/senha/esqueci` | Público | Envia o código de recuperação para o e-mail (`{"email"}`) |
+| POST | `/senha/redefinir` | Público | Troca a senha com o código (`{"email", "codigo", "novaSenha"}`) |
 | GET | `/termos` | Público | Termos de Uso |
 | GET | `/politica` | Público | Política de Privacidade |
 | GET | `/perfil` | JWT | Dados do usuário logado |
@@ -259,6 +267,7 @@ psql -U postgres -d aprendo_db -f sql/09-ranking.sql
 psql -U postgres -d aprendo_db -f sql/10-niveis-trilha.sql
 psql -U postgres -d aprendo_db -f sql/11-avatar-ranking-geral.sql
 psql -U postgres -d aprendo_db -f sql/12-seguranca.sql
+psql -U postgres -d aprendo_db -f sql/13-recuperacao-senha.sql
 ```
 
 O conteúdo das aulas (título, texto, palavras-chave e resposta de referência) é cadastrado por esses scripts, direto na tabela `aulas`. Não há tela de cadastro de aulas no app.
@@ -275,18 +284,20 @@ npm install
 
 > No Windows, se o PowerShell bloquear o comando `npm`, use `npm.cmd install`.
 
-Crie um arquivo `.env` na pasta `backend`:
+Copie o arquivo `backend/.env.example` para `backend/.env` e preencha os valores (o arquivo explica cada variável). O essencial para rodar localmente:
 
 ```
-PORT=3000
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=sua_senha_do_postgres
 DB_NAME=aprendo_db
-JWT_SECRET=defina_uma_chave_secreta_longa
+JWT_SECRET=uma_chave_longa_e_aleatoria_com_32_caracteres_ou_mais
 GEMINI_API_KEY=sua_chave_do_google_ai_studio
+EMAIL_SIMULADO=true
 ```
+
+O servidor não liga sem `JWT_SECRET`. Com `EMAIL_SIMULADO=true`, o código de recuperação de senha aparece no terminal do servidor, sem precisar de conta no Brevo. Em produção, defina `BREVO_API_KEY` e `EMAIL_REMETENTE` (e-mail verificado no Brevo) para o código ser enviado de verdade.
 
 Em produção, defina também `ORIGENS_PERMITIDAS` com o endereço do app (ex.: `https://aprendo-app.netlify.app`; vários endereços separados por vírgula). Sem essa variável, qualquer origem é aceita, o que é útil no desenvolvimento local. `PROXIES_CONFIAVEIS` (padrão: 1) é o número de proxies na frente da API.
 
@@ -326,9 +337,10 @@ UPDATE usuarios SET perfil = 'admin' WHERE email = 'email_da_conta@exemplo.com';
 
 ## Testes
 
+- **Análise estática do backend:** na pasta `backend`, rode `npm run lint` (ESLint).
 - **Testes automáticos do backend:** na pasta `backend`, rode `npm test` (ou `npm run cobertura` para ver a porcentagem de código coberta; o relatório fica em `backend/coverage/index.html`). Os testes não precisam de banco nem de internet: o banco e a IA são simulados.
 - **API manual:** abra `backend/testes.http` no VS Code com a extensão REST Client. Envie primeiro o login de cada seção; os demais testes usam o token automaticamente.
-- **Frontend:** na pasta `frontend`, rode `flutter test`.
+- **Frontend:** na pasta `frontend`, rode `flutter analyze` e `flutter test`.
 
 ## Contas para teste
 

@@ -7,6 +7,7 @@ import '../componentes/campo_senha.dart';
 import '../validacoes.dart';
 import 'tela_cadastro.dart';
 import 'tela_inicio.dart';
+import 'tela_recuperar_senha.dart';
 
 // ============================================================
 // TELA DE LOGIN
@@ -79,6 +80,20 @@ class _TelaLoginState extends State<TelaLogin> {
     }
   }
 
+  // Abre a recuperação de senha já com o e-mail digitado; ao voltar com sucesso, avisa no login
+  Future<void> _recuperarSenha() async {
+    final alterou = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TelaRecuperarSenha(emailInicial: _emailController.text.trim()),
+      ),
+    );
+    if (alterou == true && mounted) {
+      _senhaController.clear();
+      setState(() => _mensagem = 'Senha alterada! Entre com a nova senha.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,7 +144,11 @@ class _TelaLoginState extends State<TelaLogin> {
                         : const Text('Entrar'),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: _carregando ? null : _recuperarSenha,
+                  child: const Text('Esqueci minha senha'),
+                ),
                 TextButton(
                   onPressed: () {
                     Navigator.push(

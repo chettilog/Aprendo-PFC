@@ -1,6 +1,6 @@
 # Política de Privacidade — Aprendo
 
-**Versão 1.4**
+**Versão 1.5**
 **Data de publicação: 21 de novembro de 2026** (versão 1.0: 27 de setembro de 2026)
 
 ## 1. Quem somos
@@ -28,6 +28,7 @@ Nesta Política, explicamos de um jeito simples quais dados coletamos, por que c
 - As explicações (produções) que você escreve nas aulas, a nota e o comentário que elas receberam e o XP ganho
 - O seu código de ranking (um número de 4 dígitos, sorteado no cadastro), os colegas que você adicionou ao seu ranking e se você escolheu aparecer no ranking
 - O avatar que você escolheu (um número de 0 a 11 que indica um dos ícones prontos do app). O Aprendo não recebe nem guarda fotos
+- Se você pedir a recuperação de senha: a data do pedido, a validade, o número de tentativas e o código enviado ao seu e-mail, guardado de forma irreversível (*hash*). Esses registros são apagados junto com a conta
 
 ### 2.3 Em tentativas de login
 
@@ -83,6 +84,10 @@ Para desenhar a interface do Aprendo no navegador, usamos uma tecnologia chamada
 Para dar uma nota justa à sua explicação, o texto que você escreve na aula é enviado à inteligência artificial Gemini, do Google, junto com o conteúdo da aula. **Só o texto da explicação é enviado**: seu nome, e-mail, identificador da conta e endereço IP não vão junto, porque quem faz o envio são os servidores do Aprendo. Por isso, **não escreva dados pessoais (seus ou de outras pessoas) nas explicações**.
 
 Antes do envio, o próprio Aprendo confere o texto e não manda à IA textos sem sentido ou copiados da aula. Se a IA estiver fora do ar, a correção é feita pelo próprio Aprendo, com base nas palavras-chave da aula. Os servidores do Google podem ficar fora do Brasil.
+
+### 5.4 Brevo — envio do código de recuperação de senha
+
+Quando você pede para recuperar a senha, o seu e-mail e o seu primeiro nome são enviados ao Brevo, um serviço de envio de e-mails, **apenas para entregar o código** de 6 dígitos. O Brevo não recebe a sua senha nem outros dados da conta. Os servidores do Brevo ficam fora do Brasil.
 
 ## 6. Como protegemos seus dados
 
@@ -150,6 +155,7 @@ No cadastro, pedimos apenas que você declare ter 12 anos ou mais. Escolhemos n�
 - **Servidor da aplicação** (que recebe os pedidos do aplicativo e acessa o banco): provedor Render, com servidores nos Estados Unidos
 - **Site do aplicativo**: provedor Netlify, que entrega os arquivos do site a partir de servidores em vários países
 - **Correção das explicações**: Google Gemini (seção 5.3)
+- **Envio do código de recuperação de senha**: Brevo (seção 5.4)
 
 Quando os dados passam por servidores fora do Brasil, isso é uma transferência internacional de dados (LGPD, Art. 33). Escolhemos provedores que adotam medidas de segurança reconhecidas internacionalmente e usamos conexão segura (HTTPS) em todo o caminho.
 
@@ -174,4 +180,4 @@ Respondemos em até 15 dias corridos.
 ---
 
 *Aprendo Tecnologia Educacional Ltda.*
-*Versão 1.4*
+*Versão 1.5*

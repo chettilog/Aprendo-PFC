@@ -338,6 +338,37 @@ Content-Type: application/json
   "aparecer": true
 }
 
+### ===================== RECUPERACAO DE SENHA =====================
+### Com EMAIL_SIMULADO=true no .env, o codigo aparece no terminal do servidor
+
+### Pedir o codigo - esperado 200 (mesma resposta exista ou nao a conta)
+POST {{api}}/senha/esqueci
+Content-Type: application/json
+
+{
+  "email": "aluno@teste.com"
+}
+
+### Codigo com formato errado - esperado 400
+POST {{api}}/senha/redefinir
+Content-Type: application/json
+
+{
+  "email": "aluno@teste.com",
+  "codigo": "12ab",
+  "novaSenha": "NovaSenha123"
+}
+
+### Redefinir com o codigo recebido (troque 000000 pelo codigo) - esperado 200
+POST {{api}}/senha/redefinir
+Content-Type: application/json
+
+{
+  "email": "aluno@teste.com",
+  "codigo": "000000",
+  "novaSenha": "NovaSenha123"
+}
+
 ### ===================== EXCLUSAO DE CONTA (RF21) =====================
 # Cria uma conta descartavel, entra com ela e a exclui (envie na ordem).
 

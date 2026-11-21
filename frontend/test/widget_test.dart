@@ -6,6 +6,7 @@ import 'package:aprendo_frontend/main.dart';
 import 'package:aprendo_frontend/telas/tela_admin.dart';
 import 'package:aprendo_frontend/telas/tela_cadastro.dart';
 import 'package:aprendo_frontend/telas/tela_editar_perfil.dart';
+import 'package:aprendo_frontend/telas/tela_recuperar_senha.dart';
 import 'package:aprendo_frontend/telas/tela_trilhas.dart';
 import 'package:aprendo_frontend/validacoes.dart';
 
@@ -17,6 +18,29 @@ void main() {
     expect(find.widgetWithText(TextField, 'E-mail'), findsOneWidget);
     expect(find.widgetWithText(TextField, 'Senha'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Entrar'), findsOneWidget);
+  });
+
+  testWidgets('Esqueci minha senha abre a recuperação com o e-mail já preenchido', (WidgetTester tester) async {
+    await tester.pumpWidget(const AprendoApp());
+    await tester.enterText(find.widgetWithText(TextField, 'E-mail'), 'ana@escola.com');
+    await tester.tap(find.widgetWithText(TextButton, 'Esqueci minha senha'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TelaRecuperarSenha), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Enviar código'), findsOneWidget);
+    final campo = tester.widget<TextField>(find.widgetWithText(TextField, 'E-mail'));
+    expect(campo.controller!.text, 'ana@escola.com');
+  });
+
+  testWidgets('A recuperação não envia com e-mail inválido', (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: TelaRecuperarSenha()));
+    await tester.enterText(find.widgetWithText(TextField, 'E-mail'), 'sem-arroba');
+    await tester.tap(find.widgetWithText(FilledButton, 'Enviar código'));
+    await tester.pump();
+
+    // continua na etapa do e-mail, com a mensagem de validação
+    expect(find.widgetWithText(FilledButton, 'Enviar código'), findsOneWidget);
+    expect(find.text('Código'), findsNothing);
   });
 
   testWidgets('No login a senha fica escondida e não tem olhinho', (WidgetTester tester) async {

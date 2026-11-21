@@ -10,15 +10,16 @@ const { limites } = require('../middlewares/limites');
 
 const router = express.Router();
 
-// Versão atual dos documentos aceitos (Termos 1.1 + Política 1.4; atualizar quando mudarem)
-const VERSAO_TERMOS = '1.4';
+// Versão atual dos documentos aceitos (Termos 1.1 + Política 1.5; atualizar quando mudarem)
+const VERSAO_TERMOS = '1.5';
 
 // Cadastro de usuário
 router.post('/cadastro', limites.cadastro, async (req, res) => {
   try {
     const { senha, aceitouTermos, idadeMinima } = req.body || {};
     const nome = typeof req.body?.nome === 'string' ? req.body.nome.trim() : '';
-    const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+    // O e-mail é guardado em minúsculas: Ana@x.com e ana@x.com são a mesma conta
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
 
     const erroValidacao = validarCadastro(nome, email, senha);
     if (erroValidacao) {
@@ -38,6 +39,13 @@ router.post('/cadastro', limites.cadastro, async (req, res) => {
       return res.status(400).json({
         error: 'É necessário declarar que você tem 12 anos ou mais'
       });
+    }
+
+    // Contas antigas podem ter o e-mail com maiúsculas: a comparação ignora a diferença
+    const existente = await pool.query('SELECT 1 FROM usuarios WHERE lower(email) = $1', [email]);
+    if (existente.rows.length > 0) {
+      await registrarLog(null, 'cadastro_falha', `E-mail já cadastrado: ${mascararEmail(email)}`, req.ip, false);
+      return res.status(409).json({ error: 'Este e-mail já está cadastrado' });
     }
 
     // A senha nunca é guardada como texto: o bcrypt gera um hash irreversível
@@ -81,14 +89,20 @@ router.post('/cadastro', limites.cadastro, async (req, res) => {
 // Login: confere e-mail e senha e devolve um token JWT válido por 2 horas
 router.post('/login', limites.loginPorIp, limites.loginPorEmail, async (req, res) => {
   try {
-    const { email, senha } = req.body || {};
+    const { senha } = req.body || {};
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
 
     if (!email || !senha) {
       return res.status(400).json({ error: 'E-mail e senha são obrigatórios' });
     }
 
+    // Maiúsculas e minúsculas não importam no e-mail; se houver contas antigas que só diferem
+    // nisso, vale a que foi escrita exatamente igual
     const result = await pool.query(
-      'SELECT id, nome, email, senha, perfil FROM usuarios WHERE email = $1',
+      `SELECT id, nome, email, senha, perfil FROM usuarios
+       WHERE lower(email) = lower($1)
+       ORDER BY (email = $1) DESC, id
+       LIMIT 1`,
       [email]
     );
 

@@ -4,6 +4,16 @@ const app = require('./src/app');
 const { iaConfigurada } = require('./src/servicos/ia');
 const { agendarLimpezaDeLogs } = require('./src/servicos/logs');
 
+// Sem a chave dos tokens, ninguém conseguiria entrar: melhor não ligar e avisar o motivo
+if (!process.env.JWT_SECRET) {
+  console.error('ERRO: defina a variável JWT_SECRET (veja o .env.example)');
+  process.exit(1);
+}
+// Uma chave curta pode ser adivinhada por força bruta
+if (process.env.JWT_SECRET.length < 32) {
+  console.warn('AVISO: JWT_SECRET tem menos de 32 caracteres; use uma chave longa e aleatória');
+}
+
 // Usa a porta definida pelo ambiente (Render) ou 3000 no computador local
 const PORT = process.env.PORT || 3000;
 
